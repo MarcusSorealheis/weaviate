@@ -22,6 +22,7 @@ import (
 
 	"github.com/semi-technologies/weaviate/adapters/handlers/rest/clusterapi"
 	"github.com/semi-technologies/weaviate/entities/storobj"
+	"github.com/semi-technologies/weaviate/usecases/objects"
 	"github.com/semi-technologies/weaviate/usecases/replica"
 )
 
@@ -97,16 +98,47 @@ func (c *ReplicationClient) PutObjects(ctx context.Context, host, index,
 	shard, requestID string, objects []*storobj.Object,
 ) (replica.SimpleResponse, error) {
 	var resp replica.SimpleResponse
-	marshalled, err := clusterapi.IndicesPayloads.ObjectList.Marshal(objects)
+	body, err := clusterapi.IndicesPayloads.ObjectList.Marshal(objects)
 	if err != nil {
 		return resp, fmt.Errorf("encode request: %w", err)
 	}
-	req, err := newHttpRequest(ctx, http.MethodPost, host, index, shard, requestID, "", bytes.NewReader(marshalled))
+	req, err := newHttpRequest(ctx, http.MethodPost, host, index, shard, requestID, "", bytes.NewReader(body))
 	if err != nil {
 		return resp, fmt.Errorf("create http request: %w", err)
 	}
 
 	clusterapi.IndicesPayloads.ObjectList.SetContentTypeHeaderReq(req)
+	res, err := c.client.Do(req)
+	if err != nil {
+		return resp, fmt.Errorf("connect: %w", err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return resp, fmt.Errorf("status code: %v", res.StatusCode)
+	}
+	if err := json.NewDecoder(res.Body).Decode(&resp); err != nil {
+		return resp, fmt.Errorf("decode response: %w", err)
+	}
+	return resp, nil
+}
+
+func (c *ReplicationClient) AddReferences(ctx context.Context, host, index,
+	shard, requestID string, refs []objects.BatchReference,
+) (replica.SimpleResponse, error) {
+	var resp replica.SimpleResponse
+	body, err := clusterapi.IndicesPayloads.ReferenceList.Marshal(refs)
+	if err != nil {
+		return resp, fmt.Errorf("encode request: %w", err)
+	}
+	req, err := newHttpRequest(ctx, http.MethodPost, host, index, shard,
+		requestID, "references",
+		bytes.NewReader(body))
+	if err != nil {
+		return resp, fmt.Errorf("create http request: %w", err)
+	}
+
+	clusterapi.IndicesPayloads.ReferenceList.SetContentTypeHeaderReq(req)
 	res, err := c.client.Do(req)
 	if err != nil {
 		return resp, fmt.Errorf("connect: %w", err)
@@ -167,10 +199,10 @@ func (c *ReplicationClient) Abort(ctx context.Context, host, index, shard, reque
 	return resp, nil
 }
 
-func newHttpRequest(ctx context.Context, method, host, index, shard, requestId, uuid string, body io.Reader) (*http.Request, error) {
+func newHttpRequest(ctx context.Context, method, host, index, shard, requestId, suffix string, body io.Reader) (*http.Request, error) {
 	path := fmt.Sprintf("/replica/indices/%s/shards/%s/objects", index, shard)
-	if uuid != "" {
-		path = fmt.Sprintf("%s/%s", path, uuid)
+	if suffix != "" {
+		path = fmt.Sprintf("%s/%s", path, suffix)
 	}
 	url := url.URL{
 		Scheme:   "http",
