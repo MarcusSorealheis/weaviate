@@ -154,6 +154,34 @@ func (c *ReplicationClient) AddReferences(ctx context.Context, host, index,
 	return resp, nil
 }
 
+func (c *ReplicationClient) DeleteObjects(ctx context.Context, host, index, shard, requestID string,
+	docIDs []uint64, dryRun bool,
+) (resp replica.SimpleResponse, err error) {
+	body, err := clusterapi.IndicesPayloads.BatchDeleteParams.Marshal(docIDs, dryRun)
+	if err != nil {
+		return resp, fmt.Errorf("encode request: %w", err)
+	}
+	req, err := newHttpRequest(ctx, http.MethodDelete, host, index, shard, requestID, "", bytes.NewReader(body))
+	if err != nil {
+		return resp, fmt.Errorf("create http request: %w", err)
+	}
+
+	clusterapi.IndicesPayloads.BatchDeleteParams.SetContentTypeHeaderReq(req)
+	res, err := c.client.Do(req)
+	if err != nil {
+		return resp, fmt.Errorf("connect: %w", err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return resp, fmt.Errorf("status code: %v", res.StatusCode)
+	}
+	if err := json.NewDecoder(res.Body).Decode(&resp); err != nil {
+		return resp, fmt.Errorf("decode response: %w", err)
+	}
+	return resp, nil
+}
+
 // Commit asks a host to commit and stores the response in the value pointed to by resp
 func (c *ReplicationClient) Commit(ctx context.Context, host, index, shard string, requestID string, resp interface{}) error {
 	req, err := newHttpCMD(ctx, host, "commit", index, shard, requestID, nil)

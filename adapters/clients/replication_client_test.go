@@ -253,6 +253,40 @@ func TestReplicationAddReferences(t *testing.T) {
 	})
 }
 
+func TestReplicationDeleteObjects(t *testing.T) {
+	ctx := context.Background()
+	fs := newFakeServer(t, http.MethodDelete, "/replica/indices/C1/shards/S1/objects")
+	fs.RequestError.Errors = append(fs.RequestError.Errors, "error2")
+	ts := fs.server(t)
+	defer ts.Close()
+	client := NewReplicationClient(ts.Client())
+
+	docs := []uint64{1, 2}
+	t.Run("ConnectionError", func(t *testing.T) {
+		_, err := client.DeleteObjects(ctx, "", "C1", "S1", "", docs, false)
+		assert.NotNil(t, err)
+		assert.Contains(t, err.Error(), "connect")
+	})
+
+	t.Run("Error", func(t *testing.T) {
+		resp, err := client.DeleteObjects(ctx, fs.host, "C1", "S1", RequestError, docs, false)
+		assert.Nil(t, err)
+		assert.Equal(t, replica.SimpleResponse{Errors: fs.RequestError.Errors}, resp)
+	})
+
+	t.Run("DecodeResponse", func(t *testing.T) {
+		_, err := client.DeleteObjects(ctx, fs.host, "C1", "S1", RequestMalFormedResponse, docs, false)
+		assert.NotNil(t, err)
+		assert.Contains(t, err.Error(), "decode response")
+	})
+
+	t.Run("ServerInternalError", func(t *testing.T) {
+		_, err := client.DeleteObjects(ctx, fs.host, "C1", "S1", RequestInternalError, docs, false)
+		assert.NotNil(t, err)
+		assert.Contains(t, err.Error(), "status code")
+	})
+}
+
 func TestReplicationAbort(t *testing.T) {
 	ctx := context.Background()
 	path := "/replica/C1/S1:abort"
