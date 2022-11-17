@@ -123,6 +123,37 @@ func (c *ReplicationClient) PutObjects(ctx context.Context, host, index,
 	return resp, nil
 }
 
+func (c *ReplicationClient) MergeObject(ctx context.Context, host, index, shard, requestID string,
+	doc *objects.MergeDocument,
+) (replica.SimpleResponse, error) {
+	var resp replica.SimpleResponse
+	body, err := clusterapi.IndicesPayloads.MergeDoc.Marshal(*doc)
+	if err != nil {
+		return resp, fmt.Errorf("encode request: %w", err)
+	}
+
+	req, err := newHttpRequest(ctx, http.MethodPatch, host, index, shard,
+		requestID, doc.ID.String(), bytes.NewReader(body))
+	if err != nil {
+		return resp, fmt.Errorf("create http request: %w", err)
+	}
+
+	clusterapi.IndicesPayloads.MergeDoc.SetContentTypeHeaderReq(req)
+	res, err := c.client.Do(req)
+	if err != nil {
+		return resp, fmt.Errorf("connect: %w", err)
+	}
+
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		return resp, fmt.Errorf("status code: %v", res.StatusCode)
+	}
+	if err := json.NewDecoder(res.Body).Decode(&resp); err != nil {
+		return resp, fmt.Errorf("decode response: %w", err)
+	}
+	return resp, nil
+}
+
 func (c *ReplicationClient) AddReferences(ctx context.Context, host, index,
 	shard, requestID string, refs []objects.BatchReference,
 ) (replica.SimpleResponse, error) {

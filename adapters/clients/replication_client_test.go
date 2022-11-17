@@ -219,6 +219,40 @@ func TestReplicationPutObjects(t *testing.T) {
 	})
 }
 
+func TestReplicationMergeObject(t *testing.T) {
+	ctx := context.Background()
+	uuid := UUID1
+	f := newFakeServer(t, http.MethodPatch, "/replica/indices/C1/shards/S1/objects/"+uuid.String())
+	ts := f.server(t)
+	defer ts.Close()
+
+	client := NewReplicationClient(ts.Client())
+	doc := &objects.MergeDocument{ID: uuid}
+	t.Run("ConnectionError", func(t *testing.T) {
+		_, err := client.MergeObject(ctx, "", "C1", "S1", "", doc)
+		assert.NotNil(t, err)
+		assert.Contains(t, err.Error(), "connect")
+	})
+
+	t.Run("Error", func(t *testing.T) {
+		resp, err := client.MergeObject(ctx, f.host, "C1", "S1", RequestError, doc)
+		assert.Nil(t, err)
+		assert.Equal(t, replica.SimpleResponse{Errors: f.RequestError.Errors}, resp)
+	})
+
+	t.Run("DecodeResponse", func(t *testing.T) {
+		_, err := client.MergeObject(ctx, f.host, "C1", "S1", RequestMalFormedResponse, doc)
+		assert.NotNil(t, err)
+		assert.Contains(t, err.Error(), "decode response")
+	})
+
+	t.Run("ServerInternalError", func(t *testing.T) {
+		_, err := client.MergeObject(ctx, f.host, "C1", "S1", RequestInternalError, doc)
+		assert.NotNil(t, err)
+		assert.Contains(t, err.Error(), "status code")
+	})
+}
+
 func TestReplicationAddReferences(t *testing.T) {
 	ctx := context.Background()
 	fs := newFakeServer(t, http.MethodPost, "/replica/indices/C1/shards/S1/objects/references")
