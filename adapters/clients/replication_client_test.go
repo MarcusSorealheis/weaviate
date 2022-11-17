@@ -21,6 +21,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"github.com/semi-technologies/weaviate/entities/storobj"
+	"github.com/semi-technologies/weaviate/usecases/objects"
 	"github.com/semi-technologies/weaviate/usecases/replica"
 	"github.com/stretchr/testify/assert"
 )
@@ -213,6 +214,40 @@ func TestReplicationPutObjects(t *testing.T) {
 
 	t.Run("ServerInternalError", func(t *testing.T) {
 		_, err := client.PutObjects(ctx, fs.host, "C1", "S1", RequestInternalError, objects)
+		assert.NotNil(t, err)
+		assert.Contains(t, err.Error(), "status code")
+	})
+}
+
+func TestReplicationAddReferences(t *testing.T) {
+	ctx := context.Background()
+	fs := newFakeServer(t, http.MethodPost, "/replica/indices/C1/shards/S1/objects/references")
+	fs.RequestError.Errors = append(fs.RequestError.Errors, "error2")
+	ts := fs.server(t)
+	defer ts.Close()
+
+	client := NewReplicationClient(ts.Client())
+	refs := []objects.BatchReference{{OriginalIndex: 1}, {OriginalIndex: 2}}
+	t.Run("ConnectionError", func(t *testing.T) {
+		_, err := client.AddReferences(ctx, "", "C1", "S1", "", refs)
+		assert.NotNil(t, err)
+		assert.Contains(t, err.Error(), "connect")
+	})
+
+	t.Run("Error", func(t *testing.T) {
+		resp, err := client.AddReferences(ctx, fs.host, "C1", "S1", RequestError, refs)
+		assert.Nil(t, err)
+		assert.Equal(t, replica.SimpleResponse{Errors: fs.RequestError.Errors}, resp)
+	})
+
+	t.Run("DecodeResponse", func(t *testing.T) {
+		_, err := client.AddReferences(ctx, fs.host, "C1", "S1", RequestMalFormedResponse, refs)
+		assert.NotNil(t, err)
+		assert.Contains(t, err.Error(), "decode response")
+	})
+
+	t.Run("ServerInternalError", func(t *testing.T) {
+		_, err := client.AddReferences(ctx, fs.host, "C1", "S1", RequestInternalError, refs)
 		assert.NotNil(t, err)
 		assert.Contains(t, err.Error(), "status code")
 	})
