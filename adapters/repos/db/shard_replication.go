@@ -20,6 +20,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/semi-technologies/weaviate/entities/storagestate"
 	"github.com/semi-technologies/weaviate/entities/storobj"
+	"github.com/semi-technologies/weaviate/usecases/objects"
 	"github.com/semi-technologies/weaviate/usecases/replica"
 )
 
@@ -68,13 +69,29 @@ func (s *Shard) abort(ctx context.Context, requestID string) replica.SimpleRespo
 }
 
 func (s *Shard) preparePutObject(ctx context.Context, requestID string, object *storobj.Object) replica.SimpleResponse {
-	uuid, err := s.canPutOne(ctx, object)
+	uuid, err := s.canWriteOne(ctx, object.ID())
 	if err != nil {
 		return replica.SimpleResponse{Errors: []string{err.Error()}}
 	}
 	task := func(ctx context.Context) interface{} {
 		resp := replica.SimpleResponse{}
 		if err := s.putOne(ctx, uuid, object); err != nil {
+			resp.Errors = []string{err.Error()}
+		}
+		return resp
+	}
+	s.replicationMap.set(requestID, task)
+	return replica.SimpleResponse{}
+}
+
+func (s *Shard) prepareMergeObject(ctx context.Context, requestID string, doc *objects.MergeDocument) replica.SimpleResponse {
+	uuid, err := s.canWriteOne(ctx, doc.ID)
+	if err != nil {
+		return replica.SimpleResponse{Errors: []string{err.Error()}}
+	}
+	task := func(ctx context.Context) interface{} {
+		resp := replica.SimpleResponse{}
+		if err := s.merge(ctx, uuid, *doc); err != nil {
 			resp.Errors = []string{err.Error()}
 		}
 		return resp

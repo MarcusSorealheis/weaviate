@@ -22,6 +22,7 @@ import (
 	"github.com/semi-technologies/weaviate/adapters/repos/db/vector/noop"
 	"github.com/semi-technologies/weaviate/entities/storobj"
 	hnswent "github.com/semi-technologies/weaviate/entities/vectorindex/hnsw"
+	"github.com/semi-technologies/weaviate/usecases/objects"
 	"github.com/semi-technologies/weaviate/usecases/replica"
 )
 
@@ -118,6 +119,16 @@ func (i *Index) ReplicateObject(ctx context.Context, shard, requestID string, ob
 		return replica.SimpleResponse{Errors: []string{"shard not found"}}
 	}
 	return localShard.preparePutObject(ctx, requestID, object)
+}
+
+func (i *Index) ReplicateUpdate(ctx context.Context, shard, requestID string, doc *objects.MergeDocument) replica.SimpleResponse {
+	i.backupStateLock.RLock()
+	defer i.backupStateLock.RUnlock()
+	localShard, ok := i.Shards[shard]
+	if !ok {
+		return replica.SimpleResponse{Errors: []string{"shard not found"}}
+	}
+	return localShard.prepareMergeObject(ctx, requestID, doc)
 }
 
 func (i *Index) ReplicateDeletion(ctx context.Context, shard, requestID string, uuid strfmt.UUID) replica.SimpleResponse {
