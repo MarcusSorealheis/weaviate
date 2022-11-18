@@ -274,7 +274,7 @@ func newHttpRequest(ctx context.Context, method, host, index, shard, requestId, 
 }
 
 func newHttpCMD(ctx context.Context, host, cmd, index, shard, requestId string, body io.Reader) (*http.Request, error) {
-	path := fmt.Sprintf("/replica/%s/%s:%s", index, shard, cmd)
+	path := fmt.Sprintf("/replica/indices/%s/shards/%s:%s", index, shard, cmd)
 	q := url.Values{replica.RequestKey: []string{requestId}}.Encode()
 	url := url.URL{Scheme: "http", Host: host, Path: path, RawQuery: q}
 	return http.NewRequestWithContext(ctx, http.MethodPost, url.String(), body)

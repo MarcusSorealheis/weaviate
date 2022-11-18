@@ -138,7 +138,7 @@ func (r *Replicator) DeleteObjects(ctx context.Context, localhost, shard string,
 }
 
 func (r *Replicator) AddReferences(ctx context.Context, localhost, shard string,
-	refs objects.BatchReferences,
+	refs []objects.BatchReference,
 ) []error {
 	coord := newCoordinator[SimpleResponse](r, shard, localhost)
 	op := func(ctx context.Context, host, requestID string) error {

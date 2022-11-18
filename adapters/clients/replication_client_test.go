@@ -323,7 +323,7 @@ func TestReplicationDeleteObjects(t *testing.T) {
 
 func TestReplicationAbort(t *testing.T) {
 	ctx := context.Background()
-	path := "/replica/C1/S1:abort"
+	path := "/replica/indices/C1/shards/S1:abort"
 	fs := newFakeServer(t, http.MethodPost, path)
 	ts := fs.server(t)
 	defer ts.Close()
@@ -356,7 +356,7 @@ func TestReplicationAbort(t *testing.T) {
 
 func TestReplicationCommit(t *testing.T) {
 	ctx := context.Background()
-	path := "/replica/C1/S1:commit"
+	path := "/replica/indices/C1/shards/S1:commit"
 	fs := newFakeServer(t, http.MethodPost, path)
 	ts := fs.server(t)
 	defer ts.Close()
