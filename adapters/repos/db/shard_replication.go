@@ -134,6 +134,24 @@ func (s *Shard) preparePutObjects(ctx context.Context, requestID string, objects
 	return replica.SimpleResponse{}
 }
 
+func (s *Shard) prepareAddReferences(ctx context.Context, requestID string, refs []objects.BatchReference) replica.SimpleResponse {
+	if s.isReadOnly() {
+		return replica.SimpleResponse{Errors: []string{storagestate.ErrStatusReadOnly.Error()}}
+	}
+	task := func(ctx context.Context) interface{} {
+		rawErrs := newReferencesBatcher(s).References(ctx, refs)
+		resp := replica.SimpleResponse{Errors: make([]string, len(rawErrs))}
+		for i, err := range rawErrs {
+			if err != nil {
+				resp.Errors[i] = err.Error()
+			}
+		}
+		return resp
+	}
+	s.replicationMap.set(requestID, task)
+	return replica.SimpleResponse{}
+}
+
 func parseBytesUUID(id strfmt.UUID) ([]byte, error) {
 	uuid, err := uuid.Parse(string(id))
 	if err != nil {
