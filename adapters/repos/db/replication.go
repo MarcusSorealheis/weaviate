@@ -151,6 +151,16 @@ func (i *Index) ReplicateObjects(ctx context.Context, shard, requestID string, o
 	return localShard.preparePutObjects(ctx, requestID, objects)
 }
 
+func (i *Index) ReplicateDeletions(ctx context.Context, shard, requestID string, docIDs []uint64, dryRun bool) replica.SimpleResponse {
+	i.backupStateLock.RLock()
+	defer i.backupStateLock.RUnlock()
+	localShard, ok := i.Shards[shard]
+	if !ok {
+		return replica.SimpleResponse{Errors: []string{"shard not found"}}
+	}
+	return localShard.prepareDeleteObjects(ctx, requestID, docIDs, dryRun)
+}
+
 func (i *Index) ReplicateReferences(ctx context.Context, shard, requestID string, refs []objects.BatchReference) replica.SimpleResponse {
 	i.backupStateLock.RLock()
 	defer i.backupStateLock.RUnlock()

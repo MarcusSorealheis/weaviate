@@ -20,7 +20,12 @@ import (
 )
 
 type SimpleResponse struct {
-	Errors []string `json:"errors"`
+	Errors []string `json:"errors,omitempty"`
+}
+
+type DeleteBatchResponse struct {
+	Errors []string `json:"errors,omitempty"`
+	UUIDs  []string `json:"uuids,omitempty"`
 }
 
 func (r *SimpleResponse) FirstError() error {

@@ -134,6 +134,29 @@ func (s *Shard) preparePutObjects(ctx context.Context, requestID string, objects
 	return replica.SimpleResponse{}
 }
 
+func (s *Shard) prepareDeleteObjects(ctx context.Context, requestID string, docIDs []uint64, dryRun bool) replica.SimpleResponse {
+	if s.isReadOnly() {
+		return replica.SimpleResponse{Errors: []string{storagestate.ErrStatusReadOnly.Error()}}
+	}
+	task := func(ctx context.Context) interface{} {
+		result := newDeleteObjectsBatcher(s).Delete(ctx, docIDs, dryRun)
+		resp := replica.DeleteBatchResponse{
+			UUIDs:  make([]string, len(result)),
+			Errors: make([]string, len(result)),
+		}
+
+		for i, r := range result {
+			resp.UUIDs[i] = string(r.UUID)
+			if err := r.Err; err != nil {
+				resp.Errors[i] = err.Error()
+			}
+		}
+		return resp
+	}
+	s.replicationMap.set(requestID, task)
+	return replica.SimpleResponse{}
+}
+
 func (s *Shard) prepareAddReferences(ctx context.Context, requestID string, refs []objects.BatchReference) replica.SimpleResponse {
 	if s.isReadOnly() {
 		return replica.SimpleResponse{Errors: []string{storagestate.ErrStatusReadOnly.Error()}}
