@@ -201,8 +201,7 @@ func TestReplicatorDeleteObjects(t *testing.T) {
 		client.On("Commit", ctx, n, cls, shard, anyVal, anyVal).Return(nil).RunFn = func(a mock.Arguments) {
 			resp := a[5].(*DeleteBatchResponse)
 			*resp = DeleteBatchResponse{
-				UUIDs:  []string{"1", "2"},
-				Errors: []string{"", "e1"},
+				Batch: []UUID2Error{{"1", ""}, {"2", "e1"}},
 			}
 		}
 	}

@@ -141,15 +141,15 @@ func (s *Shard) prepareDeleteObjects(ctx context.Context, requestID string, docI
 	task := func(ctx context.Context) interface{} {
 		result := newDeleteObjectsBatcher(s).Delete(ctx, docIDs, dryRun)
 		resp := replica.DeleteBatchResponse{
-			UUIDs:  make([]string, len(result)),
-			Errors: make([]string, len(result)),
+			Batch: make([]replica.UUID2Error, len(result)),
 		}
 
 		for i, r := range result {
-			resp.UUIDs[i] = string(r.UUID)
+			entry := replica.UUID2Error{UUID: string(r.UUID)}
 			if err := r.Err; err != nil {
-				resp.Errors[i] = err.Error()
+				entry.Error = err.Error()
 			}
+			resp.Batch[i] = entry
 		}
 		return resp
 	}

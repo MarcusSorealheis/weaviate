@@ -215,16 +215,16 @@ func resultsFromDeletionResponses(size int, rs []DeleteBatchResponse, defaultErr
 	ret := make([]objects.BatchSimpleObject, size)
 	n := 0
 	for _, resp := range rs {
-		if len(resp.Errors) != size || len(resp.UUIDs) != size {
+		if len(resp.Batch) != size {
 			continue
 		}
 		n++
-		for i, msg := range resp.Errors {
-			if msg != "" && ret[i].Err == nil {
-				ret[i].Err = errors.New(msg)
+		for i, x := range resp.Batch {
+			if x.Error != "" && ret[i].Err == nil {
+				ret[i].Err = errors.New(x.Error)
 			}
-			if ret[i].UUID == "" && resp.UUIDs[i] != "" {
-				ret[i].UUID = strfmt.UUID(resp.UUIDs[i])
+			if ret[i].UUID == "" && x.UUID != "" {
+				ret[i].UUID = strfmt.UUID(x.UUID)
 			}
 		}
 	}
