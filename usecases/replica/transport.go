@@ -23,12 +23,21 @@ type SimpleResponse struct {
 	Errors []string `json:"errors,omitempty"`
 }
 
+func (r *SimpleResponse) FirstError() error {
+	for _, msg := range r.Errors {
+		if msg != "" {
+			return &Error{Msg: msg}
+		}
+	}
+	return nil
+}
+
 type DeleteBatchResponse struct {
 	Errors []string `json:"errors,omitempty"`
 	UUIDs  []string `json:"uuids,omitempty"`
 }
 
-func (r *SimpleResponse) FirstError() error {
+func (r *DeleteBatchResponse) FirstError() error {
 	for _, msg := range r.Errors {
 		if msg != "" {
 			return &Error{Msg: msg}
