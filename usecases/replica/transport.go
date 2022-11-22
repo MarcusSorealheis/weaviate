@@ -26,13 +26,13 @@ const (
 )
 
 type SimpleResponse struct {
-	Errors []string `json:"errors"`
+	Errors []Error `json:"errors,omitempty"`
 }
 
 func (r *SimpleResponse) FirstError() error {
-	for _, msg := range r.Errors {
-		if msg != "" {
-			return &Error{Msg: msg}
+	for i, err := range r.Errors {
+		if !err.Empty() {
+			return &r.Errors[i]
 		}
 	}
 	return nil

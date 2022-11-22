@@ -189,9 +189,9 @@ func errorsFromSimpleResponses(batchSize int, rs []SimpleResponse, defaultErr er
 			continue
 		}
 		n++
-		for i, msg := range resp.Errors {
-			if msg != "" && errs[i] == nil {
-				errs[i] = errors.New(msg)
+		for i, err := range resp.Errors {
+			if !err.Empty() && errs[i] == nil {
+				errs[i] = &resp.Errors[i]
 			}
 		}
 	}
