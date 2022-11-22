@@ -27,7 +27,7 @@ const (
 	StatusReadOnly = http.StatusAccepted
 )
 
-// Error
+// Error reports error happing during replication
 type Error struct {
 	Code StatusCode `json:"code"`
 	Msg  string     `json:"msg,omitempty"`
@@ -39,8 +39,13 @@ func (e *Error) Empty() bool {
 	return e.Code == StatusOK && e.Msg == "" && e.Err == nil
 }
 
-func NewError(code StatusCode, msg string, err error) *Error {
-	return &Error{code, msg, err}
+// NewError create new replication error
+func NewError(code StatusCode, msg string) *Error {
+	return &Error{code, msg, nil}
+}
+
+func (e *Error) Clone() *Error {
+	return &Error{Code: e.Code, Msg: e.Msg, Err: e.Err}
 }
 
 // Unwrap underlying error

@@ -38,6 +38,11 @@ func (r *SimpleResponse) FirstError() error {
 	return nil
 }
 
+type UUID2Error struct {
+	UUID  string `json:"uuid,omitempty"`
+	Error Error  `json:"error,omitempty"`
+}
+
 // DeleteBatchResponse represents the response returned by DeleteObjects
 type DeleteBatchResponse struct {
 	Batch []UUID2Error `json:"batch,omitempty"`
@@ -45,9 +50,9 @@ type DeleteBatchResponse struct {
 
 // FirstError returns the first found error
 func (r *DeleteBatchResponse) FirstError() error {
-	for _, r := range r.Batch {
-		if r.Error != "" {
-			return &Error{Msg: r.Error}
+	for i, ue := range r.Batch {
+		if !ue.Error.Empty() {
+			return &r.Batch[i].Error
 		}
 	}
 	return nil

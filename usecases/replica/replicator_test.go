@@ -201,14 +201,14 @@ func TestReplicatorDeleteObjects(t *testing.T) {
 		client.On("Commit", ctx, n, cls, shard, anyVal, anyVal).Return(nil).RunFn = func(a mock.Arguments) {
 			resp := a[5].(*DeleteBatchResponse)
 			*resp = DeleteBatchResponse{
-				Batch: []UUID2Error{{UUID: "1", Error: ""}, {UUID: "2", Error: "e1"}},
+				Batch: []UUID2Error{{"1", Error{}}, {"2", Error{Msg: "e1"}}},
 			}
 		}
 	}
 	result := rep.DeleteObjects(ctx, shard, docIDs, false)
 	assert.Equal(t, len(result), 2)
 	assert.Equal(t, objects.BatchSimpleObject{UUID: "1", Err: nil}, result[0])
-	assert.Equal(t, objects.BatchSimpleObject{UUID: "2", Err: errors.New("e1")}, result[1])
+	assert.Equal(t, objects.BatchSimpleObject{UUID: "2", Err: &Error{Msg: "e1"}}, result[1])
 }
 
 func TestReplicatorPutObjects(t *testing.T) {
