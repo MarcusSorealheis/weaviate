@@ -116,9 +116,6 @@ func (s *Shard) prepareDeleteObject(ctx context.Context, requestID string, uuid 
 }
 
 func (s *Shard) preparePutObjects(ctx context.Context, requestID string, objects []*storobj.Object) replica.SimpleResponse {
-	if s.isReadOnly() {
-		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusReadOnly}}}
-	}
 	task := func(ctx context.Context) interface{} {
 		rawErrs := s.putBatch(ctx, objects)
 		resp := replica.SimpleResponse{Errors: make([]replica.Error, len(rawErrs))}
@@ -134,9 +131,6 @@ func (s *Shard) preparePutObjects(ctx context.Context, requestID string, objects
 }
 
 func (s *Shard) prepareDeleteObjects(ctx context.Context, requestID string, docIDs []uint64, dryRun bool) replica.SimpleResponse {
-	if s.isReadOnly() {
-		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusReadOnly}}}
-	}
 	task := func(ctx context.Context) interface{} {
 		result := newDeleteObjectsBatcher(s).Delete(ctx, docIDs, dryRun)
 		resp := replica.DeleteBatchResponse{
@@ -157,9 +151,6 @@ func (s *Shard) prepareDeleteObjects(ctx context.Context, requestID string, docI
 }
 
 func (s *Shard) prepareAddReferences(ctx context.Context, requestID string, refs []objects.BatchReference) replica.SimpleResponse {
-	if s.isReadOnly() {
-		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusReadOnly}}}
-	}
 	task := func(ctx context.Context) interface{} {
 		rawErrs := newReferencesBatcher(s).References(ctx, refs)
 		resp := replica.SimpleResponse{Errors: make([]replica.Error, len(rawErrs))}

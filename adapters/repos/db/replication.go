@@ -148,6 +148,9 @@ func (i *Index) ReplicateObject(ctx context.Context, shard, requestID string, ob
 	if !ok {
 		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusShardNotFound}}}
 	}
+	if localShard.isReadOnly() {
+		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusReadOnly}}}
+	}
 	return localShard.preparePutObject(ctx, requestID, object)
 }
 
@@ -158,7 +161,9 @@ func (i *Index) ReplicateUpdate(ctx context.Context, shard, requestID string, do
 	if !ok {
 		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusShardNotFound}}}
 	}
-
+	if localShard.isReadOnly() {
+		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusReadOnly}}}
+	}
 	return localShard.prepareMergeObject(ctx, requestID, doc)
 }
 
@@ -169,7 +174,9 @@ func (i *Index) ReplicateDeletion(ctx context.Context, shard, requestID string, 
 	if !ok {
 		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusShardNotFound}}}
 	}
-
+	if localShard.isReadOnly() {
+		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusReadOnly}}}
+	}
 	return localShard.prepareDeleteObject(ctx, requestID, uuid)
 }
 
@@ -180,7 +187,9 @@ func (i *Index) ReplicateObjects(ctx context.Context, shard, requestID string, o
 	if !ok {
 		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusShardNotFound}}}
 	}
-
+	if localShard.isReadOnly() {
+		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusReadOnly}}}
+	}
 	return localShard.preparePutObjects(ctx, requestID, objects)
 }
 
@@ -191,7 +200,9 @@ func (i *Index) ReplicateDeletions(ctx context.Context, shard, requestID string,
 	if !ok {
 		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusShardNotFound}}}
 	}
-
+	if localShard.isReadOnly() {
+		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusReadOnly}}}
+	}
 	return localShard.prepareDeleteObjects(ctx, requestID, docIDs, dryRun)
 }
 
@@ -202,7 +213,9 @@ func (i *Index) ReplicateReferences(ctx context.Context, shard, requestID string
 	if !ok {
 		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusShardNotFound}}}
 	}
-
+	if localShard.isReadOnly() {
+		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusReadOnly}}}
+	}
 	return localShard.prepareAddReferences(ctx, requestID, refs)
 }
 
