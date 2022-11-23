@@ -46,108 +46,99 @@ type Replicator interface {
 		requestID string) interface{}
 }
 
-func (db *DB) ReplicateObject(ctx context.Context, indexName,
-	shardName, requestID string, object *storobj.Object,
+func (db *DB) ReplicateObject(ctx context.Context, class,
+	shard, requestID string, object *storobj.Object,
 ) replica.SimpleResponse {
-	index := db.GetIndex(schema.ClassName(indexName))
-	if index == nil {
-		return replica.SimpleResponse{
-			Errors: []string{fmt.Sprintf("local index %q not found", indexName)},
-		}
+	index, pr := db.replicatedIndex(class)
+	if pr != nil {
+		return *pr
 	}
 
-	return index.ReplicateObject(ctx, shardName, requestID, object)
+	return index.ReplicateObject(ctx, shard, requestID, object)
 }
 
-func (db *DB) ReplicateObjects(ctx context.Context, indexName,
-	shardName, requestID string, objects []*storobj.Object,
+func (db *DB) ReplicateObjects(ctx context.Context, class,
+	shard, requestID string, objects []*storobj.Object,
 ) replica.SimpleResponse {
-	index := db.GetIndex(schema.ClassName(indexName))
-	if index == nil {
-		return replica.SimpleResponse{
-			Errors: []string{fmt.Sprintf("local index %q not found", indexName)},
-		}
+	index, pr := db.replicatedIndex(class)
+	if pr != nil {
+		return *pr
 	}
 
-	return index.ReplicateObjects(ctx, shardName, requestID, objects)
+	return index.ReplicateObjects(ctx, shard, requestID, objects)
 }
 
-func (db *DB) ReplicateUpdate(ctx context.Context, indexName,
-	shardName, requestID string, mergeDoc *objects.MergeDocument,
+func (db *DB) ReplicateUpdate(ctx context.Context, class,
+	shard, requestID string, mergeDoc *objects.MergeDocument,
 ) replica.SimpleResponse {
-	index := db.GetIndex(schema.ClassName(indexName))
-	if index == nil {
-		return replica.SimpleResponse{
-			Errors: []string{fmt.Sprintf("local index %q not found", indexName)},
-		}
+	index, pr := db.replicatedIndex(class)
+	if pr != nil {
+		return *pr
 	}
 
-	return index.ReplicateUpdate(ctx, shardName, requestID, mergeDoc)
+	return index.ReplicateUpdate(ctx, shard, requestID, mergeDoc)
 }
 
-func (db *DB) ReplicateDeletion(ctx context.Context, indexName,
-	shardName, requestID string, uuid strfmt.UUID,
+func (db *DB) ReplicateDeletion(ctx context.Context, class,
+	shard, requestID string, uuid strfmt.UUID,
 ) replica.SimpleResponse {
-	index := db.GetIndex(schema.ClassName(indexName))
-	if index == nil {
-		return replica.SimpleResponse{
-			Errors: []string{fmt.Sprintf("local index %q not found", indexName)},
-		}
+	index, pr := db.replicatedIndex(class)
+	if pr != nil {
+		return *pr
 	}
 
-	return index.ReplicateDeletion(ctx, shardName, requestID, uuid)
+	return index.ReplicateDeletion(ctx, shard, requestID, uuid)
 }
 
-func (db *DB) ReplicateDeletions(ctx context.Context, indexName,
-	shardName, requestID string, docIDs []uint64, dryRun bool,
+func (db *DB) ReplicateDeletions(ctx context.Context, class,
+	shard, requestID string, docIDs []uint64, dryRun bool,
 ) replica.SimpleResponse {
-	index := db.GetIndex(schema.ClassName(indexName))
-	if index == nil {
-		return replica.SimpleResponse{
-			Errors: []string{fmt.Sprintf("local index %q not found", indexName)},
-		}
+	index, pr := db.replicatedIndex(class)
+	if pr != nil {
+		return *pr
 	}
 
-	return index.ReplicateDeletions(ctx, shardName, requestID, docIDs, dryRun)
+	return index.ReplicateDeletions(ctx, shard, requestID, docIDs, dryRun)
 }
 
-func (db *DB) ReplicateReferences(ctx context.Context, indexName,
-	shardName, requestID string, refs []objects.BatchReference,
+func (db *DB) ReplicateReferences(ctx context.Context, class,
+	shard, requestID string, refs []objects.BatchReference,
 ) replica.SimpleResponse {
-	index := db.GetIndex(schema.ClassName(indexName))
-	if index == nil {
-		return replica.SimpleResponse{
-			Errors: []string{fmt.Sprintf("local index %q not found", indexName)},
-		}
+	index, pr := db.replicatedIndex(class)
+	if pr != nil {
+		return *pr
 	}
 
-	return index.ReplicateReferences(ctx, shardName, requestID, refs)
+	return index.ReplicateReferences(ctx, shard, requestID, refs)
 }
 
-func (db *DB) CommitReplication(ctx context.Context, indexName,
-	shardName, requestID string,
+func (db *DB) CommitReplication(ctx context.Context, class,
+	shard, requestID string,
 ) interface{} {
-	index := db.GetIndex(schema.ClassName(indexName))
-	if index == nil {
-		return replica.SimpleResponse{
-			Errors: []string{fmt.Sprintf("local index %q not found", indexName)},
-		}
+	index, pr := db.replicatedIndex(class)
+	if pr != nil {
+		return *pr
 	}
 
-	return index.CommitReplication(ctx, shardName, requestID)
+	return index.CommitReplication(ctx, shard, requestID)
 }
 
-func (db *DB) AbortReplication(ctx context.Context, indexName,
-	shardName, requestID string,
+func (db *DB) AbortReplication(ctx context.Context, class,
+	shard, requestID string,
 ) interface{} {
-	index := db.GetIndex(schema.ClassName(indexName))
-	if index == nil {
-		return replica.SimpleResponse{
-			Errors: []string{fmt.Sprintf("local index %q not found", indexName)},
-		}
+	index, pr := db.replicatedIndex(class)
+	if pr != nil {
+		return *pr
 	}
 
-	return index.AbortReplication(ctx, shardName, requestID)
+	return index.AbortReplication(ctx, shard, requestID)
+}
+
+func (db *DB) replicatedIndex(name string) (idx *Index, resp *replica.SimpleResponse) {
+	if idx = db.GetIndex(schema.ClassName(name)); idx == nil {
+		return nil, &replica.SimpleResponse{Errors: []replica.Error{*replica.NewError(replica.StatusClassNotFound, name)}}
+	}
+	return
 }
 
 func (i *Index) ReplicateObject(ctx context.Context, shard, requestID string, object *storobj.Object) replica.SimpleResponse {
@@ -155,7 +146,7 @@ func (i *Index) ReplicateObject(ctx context.Context, shard, requestID string, ob
 	defer i.backupStateLock.RUnlock()
 	localShard, ok := i.Shards[shard]
 	if !ok {
-		return replica.SimpleResponse{Errors: []string{"shard not found"}}
+		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusShardNotFound}}}
 	}
 	return localShard.preparePutObject(ctx, requestID, object)
 }
@@ -165,8 +156,9 @@ func (i *Index) ReplicateUpdate(ctx context.Context, shard, requestID string, do
 	defer i.backupStateLock.RUnlock()
 	localShard, ok := i.Shards[shard]
 	if !ok {
-		return replica.SimpleResponse{Errors: []string{"shard not found"}}
+		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusShardNotFound}}}
 	}
+
 	return localShard.prepareMergeObject(ctx, requestID, doc)
 }
 
@@ -175,8 +167,9 @@ func (i *Index) ReplicateDeletion(ctx context.Context, shard, requestID string, 
 	defer i.backupStateLock.RUnlock()
 	localShard, ok := i.Shards[shard]
 	if !ok {
-		return replica.SimpleResponse{Errors: []string{"shard not found"}}
+		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusShardNotFound}}}
 	}
+
 	return localShard.prepareDeleteObject(ctx, requestID, uuid)
 }
 
@@ -185,8 +178,9 @@ func (i *Index) ReplicateObjects(ctx context.Context, shard, requestID string, o
 	defer i.backupStateLock.RUnlock()
 	localShard, ok := i.Shards[shard]
 	if !ok {
-		return replica.SimpleResponse{Errors: []string{"shard not found"}}
+		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusShardNotFound}}}
 	}
+
 	return localShard.preparePutObjects(ctx, requestID, objects)
 }
 
@@ -195,8 +189,9 @@ func (i *Index) ReplicateDeletions(ctx context.Context, shard, requestID string,
 	defer i.backupStateLock.RUnlock()
 	localShard, ok := i.Shards[shard]
 	if !ok {
-		return replica.SimpleResponse{Errors: []string{"shard not found"}}
+		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusShardNotFound}}}
 	}
+
 	return localShard.prepareDeleteObjects(ctx, requestID, docIDs, dryRun)
 }
 
@@ -205,8 +200,9 @@ func (i *Index) ReplicateReferences(ctx context.Context, shard, requestID string
 	defer i.backupStateLock.RUnlock()
 	localShard, ok := i.Shards[shard]
 	if !ok {
-		return replica.SimpleResponse{Errors: []string{"shard not found"}}
+		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusShardNotFound}}}
 	}
+
 	return localShard.prepareAddReferences(ctx, requestID, refs)
 }
 
@@ -215,7 +211,7 @@ func (i *Index) CommitReplication(ctx context.Context, shard, requestID string) 
 	defer i.backupStateLock.RUnlock()
 	localShard, ok := i.Shards[shard]
 	if !ok {
-		return replica.SimpleResponse{Errors: []string{"shard not found"}}
+		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusShardNotFound}}}
 	}
 	return localShard.commit(ctx, requestID)
 }
@@ -225,7 +221,7 @@ func (i *Index) AbortReplication(ctx context.Context, shard, requestID string) i
 	defer i.backupStateLock.RUnlock()
 	localShard, ok := i.Shards[shard]
 	if !ok {
-		return replica.SimpleResponse{Errors: []string{"shard not found"}}
+		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusShardNotFound}}}
 	}
 	return localShard.abort(ctx, requestID)
 }

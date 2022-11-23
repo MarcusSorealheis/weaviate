@@ -34,6 +34,8 @@ const (
 	StatusShardNotFound
 	StatusNotFound
 	StatusFound
+	StatusConflict
+	StatusPreconditionFailed
 	StatusReadOnly = http.StatusAccepted
 )
 
@@ -102,8 +104,6 @@ func (r *DeleteBatchResponse) FirstError() error {
 	}
 	return nil
 }
-
-
 
 type ReplicationClient interface {
 	PutObject(ctx context.Context, host, index, shard, requestID string,
