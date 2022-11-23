@@ -142,8 +142,6 @@ func (db *DB) replicatedIndex(name string) (idx *Index, resp *replica.SimpleResp
 }
 
 func (i *Index) ReplicateObject(ctx context.Context, shard, requestID string, object *storobj.Object) replica.SimpleResponse {
-	i.backupStateLock.RLock()
-	defer i.backupStateLock.RUnlock()
 	localShard, ok := i.Shards[shard]
 	if !ok {
 		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusShardNotFound}}}
@@ -155,8 +153,6 @@ func (i *Index) ReplicateObject(ctx context.Context, shard, requestID string, ob
 }
 
 func (i *Index) ReplicateUpdate(ctx context.Context, shard, requestID string, doc *objects.MergeDocument) replica.SimpleResponse {
-	i.backupStateLock.RLock()
-	defer i.backupStateLock.RUnlock()
 	localShard, ok := i.Shards[shard]
 	if !ok {
 		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusShardNotFound}}}
@@ -168,8 +164,6 @@ func (i *Index) ReplicateUpdate(ctx context.Context, shard, requestID string, do
 }
 
 func (i *Index) ReplicateDeletion(ctx context.Context, shard, requestID string, uuid strfmt.UUID) replica.SimpleResponse {
-	i.backupStateLock.RLock()
-	defer i.backupStateLock.RUnlock()
 	localShard, ok := i.Shards[shard]
 	if !ok {
 		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusShardNotFound}}}
@@ -181,8 +175,6 @@ func (i *Index) ReplicateDeletion(ctx context.Context, shard, requestID string, 
 }
 
 func (i *Index) ReplicateObjects(ctx context.Context, shard, requestID string, objects []*storobj.Object) replica.SimpleResponse {
-	i.backupStateLock.RLock()
-	defer i.backupStateLock.RUnlock()
 	localShard, ok := i.Shards[shard]
 	if !ok {
 		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusShardNotFound}}}
@@ -194,8 +186,6 @@ func (i *Index) ReplicateObjects(ctx context.Context, shard, requestID string, o
 }
 
 func (i *Index) ReplicateDeletions(ctx context.Context, shard, requestID string, docIDs []uint64, dryRun bool) replica.SimpleResponse {
-	i.backupStateLock.RLock()
-	defer i.backupStateLock.RUnlock()
 	localShard, ok := i.Shards[shard]
 	if !ok {
 		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusShardNotFound}}}
@@ -207,8 +197,6 @@ func (i *Index) ReplicateDeletions(ctx context.Context, shard, requestID string,
 }
 
 func (i *Index) ReplicateReferences(ctx context.Context, shard, requestID string, refs []objects.BatchReference) replica.SimpleResponse {
-	i.backupStateLock.RLock()
-	defer i.backupStateLock.RUnlock()
 	localShard, ok := i.Shards[shard]
 	if !ok {
 		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusShardNotFound}}}
@@ -220,18 +208,14 @@ func (i *Index) ReplicateReferences(ctx context.Context, shard, requestID string
 }
 
 func (i *Index) CommitReplication(ctx context.Context, shard, requestID string) interface{} {
-	i.backupStateLock.RLock()
-	defer i.backupStateLock.RUnlock()
 	localShard, ok := i.Shards[shard]
 	if !ok {
 		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusShardNotFound}}}
 	}
-	return localShard.commit(ctx, requestID)
+	return localShard.commit(ctx, requestID, &i.backupStateLock)
 }
 
 func (i *Index) AbortReplication(ctx context.Context, shard, requestID string) interface{} {
-	i.backupStateLock.RLock()
-	defer i.backupStateLock.RUnlock()
 	localShard, ok := i.Shards[shard]
 	if !ok {
 		return replica.SimpleResponse{Errors: []replica.Error{{Code: replica.StatusShardNotFound}}}
