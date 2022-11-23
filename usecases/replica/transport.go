@@ -14,6 +14,7 @@ package replica
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/semi-technologies/weaviate/entities/storobj"
@@ -24,6 +25,50 @@ const (
 	// RequestKey is used to marshalling request IDs
 	RequestKey = "request_id"
 )
+
+type StatusCode int
+
+const (
+	StatusOK            = iota
+	StatusClassNotFound = iota + 100
+	StatusShardNotFound
+	StatusNotFound
+	StatusFound
+	StatusReadOnly = http.StatusAccepted
+)
+
+// Error reports error happing during replication
+type Error struct {
+	Code StatusCode `json:"code"`
+	Msg  string     `json:"msg,omitempty"`
+	Err  error      `json:"-"`
+}
+
+// Empty checks whether e is an empty error which equivalent to e == nil
+func (e *Error) Empty() bool {
+	return e.Code == StatusOK && e.Msg == "" && e.Err == nil
+}
+
+// NewError create new replication error
+func NewError(code StatusCode, msg string) *Error {
+	return &Error{code, msg, nil}
+}
+
+func (e *Error) Clone() *Error {
+	return &Error{Code: e.Code, Msg: e.Msg, Err: e.Err}
+}
+
+// Unwrap underlying error
+func (e *Error) Unwrap() error { return e.Err }
+
+func (e *Error) Error() string { return fmt.Sprintf("%d %q, :%v", e.Code, e.Msg, e.Err) }
+
+func (e *Error) Timeout() bool {
+	t, ok := e.Err.(interface {
+		Timeout() bool
+	})
+	return ok && t.Timeout()
+}
 
 type SimpleResponse struct {
 	Errors []Error `json:"errors,omitempty"`
@@ -38,14 +83,14 @@ func (r *SimpleResponse) FirstError() error {
 	return nil
 }
 
-type UUID2Error struct {
-	UUID  string `json:"uuid,omitempty"`
-	Error Error  `json:"error,omitempty"`
-}
-
 // DeleteBatchResponse represents the response returned by DeleteObjects
 type DeleteBatchResponse struct {
 	Batch []UUID2Error `json:"batch,omitempty"`
+}
+
+type UUID2Error struct {
+	UUID  string `json:"uuid,omitempty"`
+	Error Error  `json:"error,omitempty"`
 }
 
 // FirstError returns the first found error
@@ -58,24 +103,7 @@ func (r *DeleteBatchResponse) FirstError() error {
 	return nil
 }
 
-type Error struct {
-	Msg string `json:"msg"`
-	Err error  `json:"-"`
-}
 
-// Unwrap underlying error
-func (e *Error) Unwrap() error {
-	return e.Err
-}
-
-func (e *Error) Error() string {
-	return fmt.Sprintf("%v :%v", e.Msg, e.Err)
-}
-
-type UUID2Error struct {
-	UUID  string `json:"uuid,omitempty"`
-	Error string `json:"error,omitempty"`
-}
 
 type ReplicationClient interface {
 	PutObject(ctx context.Context, host, index, shard, requestID string,
