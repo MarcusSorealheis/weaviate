@@ -2,7 +2,6 @@ package replica
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
@@ -23,12 +22,33 @@ func TestReplicationErrorTimeout(t *testing.T) {
 
 func TestReplicationErrorMarshal(t *testing.T) {
 	rawErr := Error{Code: StatusClassNotFound, Msg: "Article", Err: errors.New("error cannot be marshalled")}
-	fmt.Println(rawErr.Error())
-
 	bytes, err := json.Marshal(&rawErr)
 	assert.Nil(t, err)
 	got := NewError(0, "")
 	assert.Nil(t, json.Unmarshal(bytes, got))
 	want := &Error{Code: StatusClassNotFound, Msg: "Article"}
 	assert.Equal(t, want, got)
+}
+
+func TestReplicationErrorStatus(t *testing.T) {
+	tests := []struct {
+		code StatusCode
+		desc string
+	}{
+		{-1, ""},
+		{StatusOK, "ok"},
+		{StatusClassNotFound, "class not found"},
+		{StatusShardNotFound, "shard not found"},
+		{StatusNotFound, "not found"},
+		{StatusAlreadyExisted, "already existed"},
+		{StatusConflict, "conflict"},
+		{StatusPreconditionFailed, "precondition failed"},
+		{StatusReadOnly, "read only"},
+	}
+	for _, test := range tests {
+		got := statusText(test.code)
+		if got != test.desc {
+			t.Errorf("statusText(%d) want %v got %v", test.code, test.desc, got)
+		}
+	}
 }

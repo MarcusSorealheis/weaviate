@@ -62,11 +62,11 @@ func (e *Error) Clone() *Error {
 // Unwrap underlying error
 func (e *Error) Unwrap() error { return e.Err }
 
-func (e *Error) Error() string { return fmt.Sprintf("%s %q: %v", StatusText(e.Code), e.Msg, e.Err) }
+func (e *Error) Error() string { return fmt.Sprintf("%s %q: %v", statusText(e.Code), e.Msg, e.Err) }
 
-// StatusText returns a text for the status code. It returns the empty
+// statusText returns a text for the status code. It returns the empty
 // string if the code is unknown.
-func StatusText(code StatusCode) string {
+func statusText(code StatusCode) string {
 	switch code {
 	case StatusOK:
 		return "ok"
@@ -83,7 +83,7 @@ func StatusText(code StatusCode) string {
 	case StatusAlreadyExisted:
 		return "already existed"
 	case StatusReadOnly:
-		return "ready only"
+		return "read only"
 	default:
 		return ""
 	}
