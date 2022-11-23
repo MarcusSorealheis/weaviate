@@ -72,12 +72,16 @@ func (s *Shard) abort(ctx context.Context, requestID string) replica.SimpleRespo
 func (s *Shard) preparePutObject(ctx context.Context, requestID string, object *storobj.Object) replica.SimpleResponse {
 	uuid, err := parseBytesUUID(object.ID())
 	if err != nil {
-		return replica.SimpleResponse{Errors: []replica.Error{*replica.NewError(replica.StatusPreconditionFailed, err.Error())}}
+		return replica.SimpleResponse{Errors: []replica.Error{{
+			Code: replica.StatusPreconditionFailed, Msg: err.Error(),
+		}}}
 	}
 	task := func(ctx context.Context) interface{} {
 		resp := replica.SimpleResponse{}
 		if err := s.putOne(ctx, uuid, object); err != nil {
-			resp.Errors = []replica.Error{*replica.NewError(replica.StatusConflict, err.Error())}
+			resp.Errors = []replica.Error{
+				{Code: replica.StatusConflict, Msg: err.Error()},
+			}
 		}
 		return resp
 	}
@@ -88,12 +92,16 @@ func (s *Shard) preparePutObject(ctx context.Context, requestID string, object *
 func (s *Shard) prepareMergeObject(ctx context.Context, requestID string, doc *objects.MergeDocument) replica.SimpleResponse {
 	uuid, err := parseBytesUUID(doc.ID)
 	if err != nil {
-		return replica.SimpleResponse{Errors: []replica.Error{*replica.NewError(replica.StatusPreconditionFailed, err.Error())}}
+		return replica.SimpleResponse{Errors: []replica.Error{
+			{Code: replica.StatusPreconditionFailed, Msg: err.Error()},
+		}}
 	}
 	task := func(ctx context.Context) interface{} {
 		resp := replica.SimpleResponse{}
 		if err := s.merge(ctx, uuid, *doc); err != nil {
-			resp.Errors = []replica.Error{*replica.NewError(replica.StatusConflict, err.Error())}
+			resp.Errors = []replica.Error{
+				{Code: replica.StatusConflict, Msg: err.Error()},
+			}
 		}
 		return resp
 	}
@@ -104,12 +112,18 @@ func (s *Shard) prepareMergeObject(ctx context.Context, requestID string, doc *o
 func (s *Shard) prepareDeleteObject(ctx context.Context, requestID string, uuid strfmt.UUID) replica.SimpleResponse {
 	bucket, obj, idBytes, docID, err := s.canDeleteOne(ctx, uuid)
 	if err != nil {
-		return replica.SimpleResponse{Errors: []replica.Error{*replica.NewError(replica.StatusPreconditionFailed, err.Error())}}
+		return replica.SimpleResponse{
+			Errors: []replica.Error{
+				{Code: replica.StatusPreconditionFailed, Msg: err.Error()},
+			},
+		}
 	}
 	task := func(ctx context.Context) interface{} {
 		resp := replica.SimpleResponse{}
 		if err := s.deleteOne(ctx, bucket, obj, idBytes, docID); err != nil {
-			resp.Errors = []replica.Error{*replica.NewError(replica.StatusConflict, err.Error())}
+			resp.Errors = []replica.Error{
+				{Code: replica.StatusConflict, Msg: err.Error()},
+			}
 		}
 		return resp
 	}
@@ -123,7 +137,7 @@ func (s *Shard) preparePutObjects(ctx context.Context, requestID string, objects
 		resp := replica.SimpleResponse{Errors: make([]replica.Error, len(rawErrs))}
 		for i, err := range rawErrs {
 			if err != nil {
-				resp.Errors[i] = *replica.NewError(replica.StatusConflict, err.Error())
+				resp.Errors[i] = replica.Error{Code: replica.StatusConflict, Msg: err.Error()}
 			}
 		}
 		return resp
@@ -142,7 +156,7 @@ func (s *Shard) prepareDeleteObjects(ctx context.Context, requestID string, docI
 		for i, r := range result {
 			entry := replica.UUID2Error{UUID: string(r.UUID)}
 			if err := r.Err; err != nil {
-				entry.Error = *replica.NewError(replica.StatusConflict, err.Error())
+				entry.Error = replica.Error{Code: replica.StatusConflict, Msg: err.Error()}
 			}
 			resp.Batch[i] = entry
 		}
@@ -158,7 +172,7 @@ func (s *Shard) prepareAddReferences(ctx context.Context, requestID string, refs
 		resp := replica.SimpleResponse{Errors: make([]replica.Error, len(rawErrs))}
 		for i, err := range rawErrs {
 			if err != nil {
-				resp.Errors[i] = *replica.NewError(replica.StatusConflict, err.Error())
+				resp.Errors[i] = replica.Error{Code: replica.StatusConflict, Msg: err.Error()}
 			}
 		}
 		return resp
