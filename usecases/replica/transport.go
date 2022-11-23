@@ -14,7 +14,6 @@ package replica
 import (
 	"context"
 	"fmt"
-	"net/http"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/semi-technologies/weaviate/entities/storobj"
@@ -29,14 +28,14 @@ const (
 type StatusCode int
 
 const (
-	StatusOK            = iota
-	StatusClassNotFound = iota + 100
+	StatusOK            = 0
+	StatusClassNotFound = iota + 200
 	StatusShardNotFound
 	StatusNotFound
-	StatusFound
-	StatusConflict
+	StatusAlreadyExisted
+	StatusConflict = iota + 300
 	StatusPreconditionFailed
-	StatusReadOnly = http.StatusAccepted
+	StatusReadOnly
 )
 
 // Error reports error happing during replication
@@ -63,7 +62,32 @@ func (e *Error) Clone() *Error {
 // Unwrap underlying error
 func (e *Error) Unwrap() error { return e.Err }
 
-func (e *Error) Error() string { return fmt.Sprintf("%d %q, :%v", e.Code, e.Msg, e.Err) }
+func (e *Error) Error() string { return fmt.Sprintf("%s %q: %v", StatusText(e.Code), e.Msg, e.Err) }
+
+// StatusText returns a text for the status code. It returns the empty
+// string if the code is unknown.
+func StatusText(code StatusCode) string {
+	switch code {
+	case StatusOK:
+		return "ok"
+	case StatusNotFound:
+		return "not found"
+	case StatusClassNotFound:
+		return "class not found"
+	case StatusShardNotFound:
+		return "shard not found"
+	case StatusConflict:
+		return "conflict"
+	case StatusPreconditionFailed:
+		return "precondition failed"
+	case StatusAlreadyExisted:
+		return "already existed"
+	case StatusReadOnly:
+		return "ready only"
+	default:
+		return ""
+	}
+}
 
 func (e *Error) Timeout() bool {
 	t, ok := e.Err.(interface {

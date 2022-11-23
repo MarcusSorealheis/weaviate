@@ -70,7 +70,7 @@ func (s *Shard) abort(ctx context.Context, requestID string) replica.SimpleRespo
 }
 
 func (s *Shard) preparePutObject(ctx context.Context, requestID string, object *storobj.Object) replica.SimpleResponse {
-	uuid, err := s.canWriteOne(ctx, object.ID())
+	uuid, err := parseBytesUUID(object.ID())
 	if err != nil {
 		return replica.SimpleResponse{Errors: []replica.Error{*replica.NewError(replica.StatusPreconditionFailed, err.Error())}}
 	}
@@ -86,7 +86,7 @@ func (s *Shard) preparePutObject(ctx context.Context, requestID string, object *
 }
 
 func (s *Shard) prepareMergeObject(ctx context.Context, requestID string, doc *objects.MergeDocument) replica.SimpleResponse {
-	uuid, err := s.canWriteOne(ctx, doc.ID)
+	uuid, err := parseBytesUUID(doc.ID)
 	if err != nil {
 		return replica.SimpleResponse{Errors: []replica.Error{*replica.NewError(replica.StatusPreconditionFailed, err.Error())}}
 	}
