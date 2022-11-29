@@ -146,7 +146,10 @@ type Client interface {
 		refs []objects.BatchReference) (SimpleResponse, error)
 	Commit(ctx context.Context, host, index, shard, requestID string, resp interface{}) error
 	Abort(ctx context.Context, host, index, shard, requestID string) (SimpleResponse, error)
+}
 
+// RClient is the client used to read from remote replicas
+type RClient interface {
 	GetObject(ctx context.Context, host, index, shard string,
 		id strfmt.UUID, props search.SelectProperties,
 		additional additional.Properties) (*storobj.Object, error)
