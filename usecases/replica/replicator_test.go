@@ -372,3 +372,5 @@ func (f fakeFactory) newReplicator() *Replicator {
 		nodeResolver,
 		f.Client)
 }
+
+
