@@ -16,7 +16,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-openapi/strfmt"
 	"github.com/pkg/errors"
+	"github.com/semi-technologies/weaviate/entities/additional"
+	"github.com/semi-technologies/weaviate/entities/search"
+	"github.com/semi-technologies/weaviate/entities/storobj"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -32,6 +36,8 @@ type readyOp func(ctx context.Context, host, requestID string) error
 
 // readyOp asks a replica to execute the actual operation
 type commitOp[T any] func(ctx context.Context, host, requestID string) (T, error)
+
+type fetchOp[T any] func(_ context.Context, host string) (T, error)
 
 // coordinator coordinates replication of write request
 type coordinator[T any] struct {
@@ -125,4 +131,52 @@ func (c *coordinator[T]) Replicate(ctx context.Context, ask readyOp, com commitO
 		return fmt.Errorf("commit: %w", err)
 	}
 	return nil
+}
+
+func (c *coordinator[T]) Fetch(ctx context.Context, replicas []string, cl int, index, shard string,
+	id strfmt.UUID, props search.SelectProperties, additional additional.Properties,
+) (*storobj.Object, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	type pair struct {
+		i   int
+		o   *storobj.Object
+		err error
+	}
+	rsChan := make(chan pair, len(replicas))
+	for i, host := range replicas {
+		i, host := i, host
+		go func() error {
+			resp, err := c.ReplicationClient.GetObject(ctx, host, index, shard, id, props, additional)
+			rsChan <- pair{i, resp, err}
+			return nil
+		}()
+	}
+	var err error
+	type counter struct {
+		o       *storobj.Object
+		counter int
+	}
+	counters := make([]counter, len(replicas))
+	for rs := range rsChan {
+		if rs.err != nil {
+			err = fmt.Errorf("%s :%w, %v", replicas[rs.i], rs.err, err)
+			continue
+		}
+		counters[rs.i] = counter{rs.o, 1}
+		max := counters[0].counter
+		for i, c := range counters {
+			if c.o != nil && i != rs.i && c.o.LastUpdateTimeUnix() == rs.o.LastUpdateTimeUnix() {
+				counters[i].counter++
+			}
+			if max < c.counter {
+				max = c.counter
+			}
+			if max >= cl {
+				return c.o, nil
+			}
+		}
+	}
+	return nil, err
 }
