@@ -18,17 +18,17 @@ type ConsistencyLevel string
 const (
 	One    ConsistencyLevel = "ONE"
 	Quorum ConsistencyLevel = "QUORUM"
-	ALL    ConsistencyLevel = "ALL"
+	All    ConsistencyLevel = "ALL"
 )
 
 func cLevel(l ConsistencyLevel, n int) int {
 	switch l {
-	case ALL:
+	case All:
 		return n
-	case One:
-		return 1
-	default:
+	case Quorum:
 		return n/2 + 1
+	default:
+		return 1
 	}
 }
 
@@ -56,8 +56,8 @@ func NewFinder(className string,
 	}
 }
 
-// Find finds an object satisfying consistency level consLevel
-func (f *Finder) Find(ctx context.Context, level ConsistencyLevel, shard string,
+// FindOne finds one object which satisfies the giving consistency
+func (f *Finder) FindOne(ctx context.Context, level ConsistencyLevel, shard string,
 	id strfmt.UUID, props search.SelectProperties, additional additional.Properties,
 ) (*storobj.Object, error) {
 	replicas := f.replicaFinder.FindReplicas(shard)
