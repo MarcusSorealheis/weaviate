@@ -110,16 +110,16 @@ func readObject(responses <-chan tuple, cl int, replicas []string) (*storobj.Obj
 		}
 		counters[r.i] = tuple{r.o, 1, nil}
 		max := 0
-		for i, c := range counters {
-			if c.o != nil && i != r.i && c.o.LastUpdateTimeUnix() == r.o.LastUpdateTimeUnix() {
+		for i := range counters {
+			if counters[i].o != nil && i != r.i && counters[i].o.LastUpdateTimeUnix() == r.o.LastUpdateTimeUnix() {
 				counters[i].i++
 				// counters[rs.i].counter++
 			}
-			if max < c.i {
-				max = c.i
+			if max < counters[i].i {
+				max = counters[i].i
 			}
 			if max >= cl {
-				return c.o, nil
+				return counters[i].o, nil
 			}
 		}
 	}
