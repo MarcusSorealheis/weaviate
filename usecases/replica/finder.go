@@ -13,9 +13,11 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+// Finder finds replicated objects
 type Finder struct {
 	RClient       // needed to commit and abort operation
 	replicaFinder // host names of replicas
+	resolver      nodeResolver
 	class         string
 }
 
@@ -24,7 +26,8 @@ func NewFinder(className string,
 	client RClient,
 ) *Finder {
 	return &Finder{
-		class: className,
+		class:    className,
+		resolver: nodeResolver,
 		replicaFinder: &rFinder{
 			schema:   stateGetter,
 			resolver: nodeResolver,
@@ -34,27 +37,41 @@ func NewFinder(className string,
 	}
 }
 
-func (f *Finder) Find(ctx context.Context, replicas []string, cl int, index, shard string,
+// Find finds an object satisfying consistency level consLevel
+func (f *Finder) Find(ctx context.Context, replicas []string, consLevel int, shard string,
 	id strfmt.UUID, props search.SelectProperties, additional additional.Properties,
 ) (*storobj.Object, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+
 	responses := make(chan tuple, len(replicas))
 	var g errgroup.Group
 	for i, host := range replicas {
 		i, host := i, host
 		g.Go(func() error {
-			o, err := f.GetObject(ctx, host, index, shard, id, props, additional)
+			o, err := f.GetObject(ctx, host, f.class, shard, id, props, additional)
 			responses <- tuple{o, i, err}
 			return nil
 		})
 	}
 	go func() { g.Wait(); close(responses) }()
 
-	return extractObject(responses, cl, replicas)
+	return extractObject(responses, cons_level, replicas)
 }
 
-func extractObject(responses chan tuple, cl int, replicas []string) (*storobj.Object, error) {
+// NodeObject gets object from a specific node.
+// it is used mainly for debugging purposes
+func (f *Finder) NodeObject(ctx context.Context, nodeName, shard string,
+	id strfmt.UUID, props search.SelectProperties, additional additional.Properties,
+) (*storobj.Object, error) {
+	host, ok := f.resolver.NodeHostname(nodeName)
+	if !ok || host == "" {
+		return nil, fmt.Errorf("cannot resolve node name: %s", nodeName)
+	}
+	return f.RClient.GetObject(ctx, host, f.class, shard, id, props, additional)
+}
+
+func extractObject(responses <-chan tuple, cl int, replicas []string) (*storobj.Object, error) {
 	counters := make([]tuple, len(replicas))
 	nnf := 0
 	for r := range responses {
