@@ -96,7 +96,7 @@ func (p *Provider) setSinglePropertyConfigDefaults(class *models.Class,
 	prop *models.Property, cfg *ClassBasedModuleConfig,
 	cc modulecapabilities.ClassConfigurator,
 ) {
-	dt, _ := schema.GetPropertyDataType(class, prop.Name)
+	dt, _ := schema.GetValueDataTypeFromString(prop.DataType[0])
 	modDefaults := cc.PropertyConfigDefaults(dt)
 	userSpecified := cfg.Property(prop.Name)
 	mergedConfig := map[string]interface{}{}
@@ -121,17 +121,23 @@ func (p *Provider) ValidateClass(ctx context.Context, class *models.Class) error
 		return nil
 	}
 
-	mod := p.GetByName(class.Vectorizer)
-	cc, ok := mod.(modulecapabilities.ClassConfigurator)
+	moduleConfig, ok := class.ModuleConfig.(map[string]interface{})
 	if !ok {
-		// the module exists, but is not a class configurator, nothing to do for us
 		return nil
 	}
+	for key := range moduleConfig {
+		mod := p.GetByName(key)
+		cc, ok := mod.(modulecapabilities.ClassConfigurator)
+		if !ok {
+			// the module exists, but is not a class configurator, nothing to do for us
+			return nil
+		}
 
-	cfg := NewClassBasedModuleConfig(class, class.Vectorizer)
-	err := cc.ValidateClass(ctx, class, cfg)
-	if err != nil {
-		return errors.Wrapf(err, "module '%s'", class.Vectorizer)
+		cfg := NewClassBasedModuleConfig(class, key)
+		err := cc.ValidateClass(ctx, class, cfg)
+		if err != nil {
+			return errors.Wrapf(err, "module '%s'", key)
+		}
 	}
 
 	return nil

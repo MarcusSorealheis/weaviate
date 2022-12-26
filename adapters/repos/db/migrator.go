@@ -13,6 +13,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/pkg/errors"
@@ -21,6 +22,7 @@ import (
 	"github.com/semi-technologies/weaviate/entities/models"
 	"github.com/semi-technologies/weaviate/entities/schema"
 	"github.com/semi-technologies/weaviate/entities/storobj"
+	"github.com/semi-technologies/weaviate/usecases/replica"
 	"github.com/semi-technologies/weaviate/usecases/sharding"
 	"github.com/sirupsen/logrus"
 )
@@ -33,6 +35,10 @@ type Migrator struct {
 func (m *Migrator) AddClass(ctx context.Context, class *models.Class,
 	shardState *sharding.State,
 ) error {
+	if err := replica.ValidateConfig(class); err != nil {
+		return fmt.Errorf("replication config: %w", err)
+	}
+
 	idx, err := NewIndex(ctx,
 		IndexConfig{
 			ClassName:                 schema.ClassName(class.Class),
@@ -40,8 +46,13 @@ func (m *Migrator) AddClass(ctx context.Context, class *models.Class,
 			ResourceUsage:             m.db.config.ResourceUsage,
 			QueryMaximumResults:       m.db.config.QueryMaximumResults,
 			MaxImportGoroutinesFactor: m.db.config.MaxImportGoroutinesFactor,
-			FlushIdleAfter:            m.db.config.FlushIdleAfter,
+			MemtablesFlushIdleAfter:   m.db.config.MemtablesFlushIdleAfter,
+			MemtablesInitialSizeMB:    m.db.config.MemtablesInitialSizeMB,
+			MemtablesMaxSizeMB:        m.db.config.MemtablesMaxSizeMB,
+			MemtablesMinActiveSeconds: m.db.config.MemtablesMinActiveSeconds,
+			MemtablesMaxActiveSeconds: m.db.config.MemtablesMaxActiveSeconds,
 			TrackVectorDimensions:     m.db.config.TrackVectorDimensions,
+			ReplicationFactor:         class.ReplicationConfig.Factor,
 		},
 		shardState,
 		// no backward-compatibility check required, since newly added classes will
@@ -49,7 +60,7 @@ func (m *Migrator) AddClass(ctx context.Context, class *models.Class,
 		inverted.ConfigFromModel(class.InvertedIndexConfig),
 		class.VectorIndexConfig.(schema.VectorIndexConfig),
 		m.db.schemaGetter, m.db, m.logger, m.db.nodeResolver, m.db.remoteIndex,
-		m.db.replicaClient, m.db.promMetrics)
+		m.db.replicaClient, m.db.promMetrics, class)
 	if err != nil {
 		return errors.Wrap(err, "create index")
 	}
@@ -84,16 +95,9 @@ func (m *Migrator) AddClass(ctx context.Context, class *models.Class,
 		}
 
 		if class.InvertedIndexConfig.IndexPropertyLength {
-			dt := schema.DataType(prop.DataType[0])
-			// some datatypes are not added to the inverted index, so we can skip them here
-			switch dt {
-			case schema.DataTypeGeoCoordinates, schema.DataTypePhoneNumber, schema.DataTypeBlob, schema.DataTypeInt,
-				schema.DataTypeNumber, schema.DataTypeBoolean, schema.DataTypeDate:
-			default:
-				err = idx.addPropertyLength(ctx, prop)
-				if err != nil {
-					return errors.Wrapf(err, "extend idx '%s' with property length", idx.ID())
-				}
+			err = idx.addPropertyLength(ctx, prop)
+			if err != nil {
+				return errors.Wrapf(err, "extend idx '%s' with property length", idx.ID())
 			}
 		}
 	}

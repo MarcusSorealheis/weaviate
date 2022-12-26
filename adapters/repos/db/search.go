@@ -116,6 +116,45 @@ func extractDistanceFromParams(params traverser.GetParams) float32 {
 	return float32(dist)
 }
 
+func (db *DB) ClassVectorSearch(ctx context.Context, class string, vector []float32, offset, limit int,
+	filters *filters.LocalFilter,
+) ([]search.Result, error) {
+	var searchErrors []error
+	totalLimit := offset + limit
+
+	index := db.GetIndex(schema.ClassName(class))
+	if index == nil {
+		return []search.Result{}, fmt.Errorf("tried to browse non-existing index for %s", class)
+	}
+
+	objs, dist, err := index.objectVectorSearch(
+		ctx, vector, 0, totalLimit, filters, nil, additional.Properties{})
+	if err != nil {
+		return []search.Result{}, errors.Wrapf(err, "search index %s", index.ID())
+	}
+
+	found := hydrateObjectsIntoSearchResults(objs, dist)
+
+	if len(searchErrors) > 0 {
+		var msg strings.Builder
+		for i, err := range searchErrors {
+			if i != 0 {
+				msg.WriteString(", ")
+			}
+			msg.WriteString(err.Error())
+		}
+		return nil, errors.New(msg.String())
+	}
+
+	sort.Slice(found, func(i, j int) bool {
+		return found[i].Dist < found[j].Dist
+	})
+
+	// not enriching by refs, as a vector search result cannot provide
+	// SelectProperties
+	return db.getSearchResults(found, offset, limit), nil
+}
+
 func (db *DB) VectorSearch(ctx context.Context, vector []float32, offset, limit int,
 	filters *filters.LocalFilter,
 ) ([]search.Result, error) {
@@ -242,9 +281,11 @@ func (d *DB) objectSearch(ctx context.Context, offset, limit int,
 func (d *DB) validateSort(sort []filters.Sort) error {
 	if len(sort) > 0 {
 		var errorMsgs []string
+		// needs to happen before the index lock as they might deadlock each other
+		schema := d.schemaGetter.GetSchemaSkipAuth()
 		d.indexLock.RLock()
 		for _, index := range d.indices {
-			err := filters.ValidateSort(d.schemaGetter.GetSchemaSkipAuth(),
+			err := filters.ValidateSort(schema,
 				index.Config.ClassName, sort)
 			if err != nil {
 				errorMsg := errors.Wrapf(err, "search index %s", index.ID()).Error()

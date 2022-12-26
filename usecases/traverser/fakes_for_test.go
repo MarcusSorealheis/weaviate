@@ -84,6 +84,12 @@ type fakeVectorSearcher struct {
 	results          []search.Result
 }
 
+func (f *fakeVectorSearcher) ClassVectorSearch(ctx context.Context, class string, vector []float32, offset, limit int,
+	filters *filters.LocalFilter,
+) ([]search.Result, error) {
+	panic("not implemented")
+}
+
 func (f *fakeVectorSearcher) VectorSearch(ctx context.Context,
 	vector []float32, offset, limit int, filters *filters.LocalFilter,
 ) ([]search.Result, error) {
@@ -117,6 +123,7 @@ func (f *fakeVectorSearcher) ClassSearch(ctx context.Context,
 func (f *fakeVectorSearcher) Object(ctx context.Context,
 	className string, id strfmt.UUID,
 	props search.SelectProperties, additional additional.Properties,
+	_ *additional.ReplicationProperties,
 ) (*search.Result, error) {
 	args := f.Called(className, id)
 	return args.Get(0).(*search.Result), args.Error(1)
@@ -147,6 +154,7 @@ func (f *fakeVectorRepo) ObjectsByID(ctx context.Context, id strfmt.UUID,
 
 func (f *fakeVectorRepo) Object(ctx context.Context, className string, id strfmt.UUID,
 	props search.SelectProperties, additional additional.Properties,
+	repl *additional.ReplicationProperties,
 ) (*search.Result, error) {
 	return nil, nil
 }
@@ -234,7 +242,7 @@ type fakeInterpretation struct{}
 
 func (f *fakeInterpretation) AdditionalPropertyFn(ctx context.Context,
 	in []search.Result, params interface{}, limit *int,
-	argumentModuleParams map[string]interface{},
+	argumentModuleParams map[string]interface{}, cfg moduletools.ClassConfig,
 ) ([]search.Result, error) {
 	return in, nil
 }
@@ -253,7 +261,7 @@ type fakeExtender struct {
 
 func (f *fakeExtender) AdditionalPropertyFn(ctx context.Context,
 	in []search.Result, params interface{}, limit *int,
-	argumentModuleParams map[string]interface{},
+	argumentModuleParams map[string]interface{}, cfg moduletools.ClassConfig,
 ) ([]search.Result, error) {
 	return f.returnArgs, nil
 }
@@ -282,7 +290,7 @@ type fakeProjector struct {
 
 func (f *fakeProjector) AdditionalPropertyFn(ctx context.Context,
 	in []search.Result, params interface{}, limit *int,
-	argumentModuleParams map[string]interface{},
+	argumentModuleParams map[string]interface{}, cfg moduletools.ClassConfig,
 ) ([]search.Result, error) {
 	return f.returnArgs, nil
 }
@@ -303,7 +311,7 @@ type fakePathBuilder struct {
 
 func (f *fakePathBuilder) AdditionalPropertyFn(ctx context.Context,
 	in []search.Result, params interface{}, limit *int,
-	argumentModuleParams map[string]interface{},
+	argumentModuleParams map[string]interface{}, cfg moduletools.ClassConfig,
 ) ([]search.Result, error) {
 	return f.returnArgs, nil
 }

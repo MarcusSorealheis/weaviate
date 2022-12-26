@@ -86,7 +86,7 @@ func TestCRUD(t *testing.T) {
 	}
 	schemaGetter := &fakeSchemaGetter{shardState: singleShardState()}
 	repo := New(logger, Config{
-		FlushIdleAfter:            60,
+		MemtablesFlushIdleAfter:   60,
 		RootPath:                  dirName,
 		QueryMaximumResults:       10,
 		MaxImportGoroutinesFactor: 1,
@@ -258,7 +258,7 @@ func TestCRUD(t *testing.T) {
 		require.Nil(t, err)
 
 		res, err = repo.Object(context.Background(), expected.Class, thingID, nil,
-			additional.Properties{})
+			additional.Properties{}, nil)
 		require.Nil(t, err)
 
 		assert.Equal(t, expected, res.ObjectWithVector(false))
@@ -624,7 +624,8 @@ func TestCRUD(t *testing.T) {
 
 	// Check the same, but with Object()
 	t.Run("searching a thing by ID", func(t *testing.T) {
-		item, err := repo.Object(context.Background(), "TheBestThingClass", thingID, search.SelectProperties{}, additional.Properties{})
+		item, err := repo.Object(context.Background(), "TheBestThingClass",
+			thingID, search.SelectProperties{}, additional.Properties{}, nil)
 		require.Nil(t, err)
 		require.NotNil(t, item, "must have a result")
 
@@ -1291,15 +1292,15 @@ func Test_ImportWithoutVector_UpdateWithVectorLater(t *testing.T) {
 
 	schemaGetter := &fakeSchemaGetter{shardState: singleShardState()}
 	repo := New(logger, Config{
-		FlushIdleAfter:            60,
+		MemtablesFlushIdleAfter:   60,
 		RootPath:                  dirName,
 		QueryMaximumResults:       10000,
 		MaxImportGoroutinesFactor: 1,
 	}, &fakeRemoteClient{}, &fakeNodeResolver{}, &fakeRemoteNodeClient{}, &fakeReplicationClient{}, nil)
 	repo.SetSchemaGetter(schemaGetter)
 	err := repo.WaitForStartup(testCtx())
-	defer repo.Shutdown(context.Background())
 	require.Nil(t, err)
+	defer repo.Shutdown(context.Background())
 	migrator := NewMigrator(repo, logger)
 
 	t.Run("prepare data for test", func(t *testing.T) {
@@ -1447,8 +1448,8 @@ func TestVectorSearch_ByDistance(t *testing.T) {
 
 	schemaGetter := &fakeSchemaGetter{shardState: singleShardState()}
 	repo := New(logger, Config{
-		FlushIdleAfter: 60,
-		RootPath:       dirName,
+		MemtablesFlushIdleAfter: 60,
+		RootPath:                dirName,
 		// this is set really low to ensure that search
 		// by distance is conducted, which executes
 		// without regard to this value
@@ -1458,6 +1459,7 @@ func TestVectorSearch_ByDistance(t *testing.T) {
 	repo.SetSchemaGetter(schemaGetter)
 	err := repo.WaitForStartup(testCtx())
 	require.Nil(t, err)
+	defer repo.Shutdown(context.Background())
 	migrator := NewMigrator(repo, logger)
 
 	t.Run("create required schema", func(t *testing.T) {
@@ -1583,8 +1585,8 @@ func TestVectorSearch_ByCertainty(t *testing.T) {
 
 	schemaGetter := &fakeSchemaGetter{shardState: singleShardState()}
 	repo := New(logger, Config{
-		FlushIdleAfter: 60,
-		RootPath:       dirName,
+		MemtablesFlushIdleAfter: 60,
+		RootPath:                dirName,
 		// this is set really low to ensure that search
 		// by distance is conducted, which executes
 		// without regard to this value
@@ -1593,8 +1595,8 @@ func TestVectorSearch_ByCertainty(t *testing.T) {
 	}, &fakeRemoteClient{}, &fakeNodeResolver{}, &fakeRemoteNodeClient{}, &fakeReplicationClient{}, nil)
 	repo.SetSchemaGetter(schemaGetter)
 	err := repo.WaitForStartup(testCtx())
-	defer repo.Shutdown(context.Background())
 	require.Nil(t, err)
+	defer repo.Shutdown(context.Background())
 	migrator := NewMigrator(repo, logger)
 
 	t.Run("create required schema", func(t *testing.T) {
@@ -1731,7 +1733,7 @@ func Test_PutPatchRestart(t *testing.T) {
 
 	schemaGetter := &fakeSchemaGetter{shardState: singleShardState()}
 	repo := New(logger, Config{
-		FlushIdleAfter:            60,
+		MemtablesFlushIdleAfter:   60,
 		RootPath:                  dirName,
 		QueryMaximumResults:       100,
 		MaxImportGoroutinesFactor: 1,
@@ -1871,7 +1873,7 @@ func TestCRUDWithEmptyArrays(t *testing.T) {
 	}
 	schemaGetter := &fakeSchemaGetter{shardState: singleShardState()}
 	repo := New(logger, Config{
-		FlushIdleAfter:            60,
+		MemtablesFlushIdleAfter:   60,
 		RootPath:                  dirName,
 		QueryMaximumResults:       100,
 		MaxImportGoroutinesFactor: 1,
@@ -1972,13 +1974,13 @@ func TestCRUDWithEmptyArrays(t *testing.T) {
 		assert.Nil(t, repo.PutObject(context.Background(), obj2, []float32{1, 3, 5, 0.4}))
 
 		res, err := repo.Object(context.Background(), classNameWithRefs, obj1ID, nil,
-			additional.Properties{})
+			additional.Properties{}, nil)
 		require.Nil(t, err)
 		assert.NotNil(t, res)
 		assert.Equal(t, obj1.Properties, res.ObjectWithVector(false).Properties)
 
 		res, err = repo.Object(context.Background(), classNameWithRefs, obj2ID, nil,
-			additional.Properties{})
+			additional.Properties{}, nil)
 		require.Nil(t, err)
 		assert.NotNil(t, res)
 		assert.Equal(t, obj2.Properties, res.ObjectWithVector(false).Properties)

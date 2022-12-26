@@ -58,11 +58,13 @@ func TestCRUD_NoIndexProp(t *testing.T) {
 		RootPath:                  dirName,
 		QueryMaximumResults:       10000,
 		MaxImportGoroutinesFactor: 1,
-		FlushIdleAfter:            60,
+		MemtablesFlushIdleAfter:   60,
 	}, &fakeRemoteClient{}, &fakeNodeResolver{}, &fakeRemoteNodeClient{}, &fakeReplicationClient{}, nil)
 	repo.SetSchemaGetter(schemaGetter)
 	err := repo.WaitForStartup(testCtx())
 	require.Nil(t, err)
+	defer repo.Shutdown(context.Background())
+
 	migrator := NewMigrator(repo, logger)
 
 	t.Run("creating the thing class", func(t *testing.T) {
@@ -112,7 +114,7 @@ func TestCRUD_NoIndexProp(t *testing.T) {
 	// Same as above, but with Object()
 	t.Run("all props are present when getting by id and class", func(t *testing.T) {
 		res, err := repo.Object(context.Background(), "ThingClassWithNoIndexProps", thingID,
-			search.SelectProperties{}, additional.Properties{})
+			search.SelectProperties{}, additional.Properties{}, nil)
 		expectedSchema := map[string]interface{}{
 			"stringProp":       "some value",
 			"hiddenStringProp": "some hidden value",

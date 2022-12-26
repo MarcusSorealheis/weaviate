@@ -42,7 +42,7 @@ func (m *Manager) DeleteObjectReference(
 	defer m.metrics.DeleteReferenceDec()
 
 	deprecatedEndpoint := input.Class == ""
-	res, err := m.getObjectFromRepo(ctx, input.Class, input.ID, additional.Properties{})
+	res, err := m.getObjectFromRepo(ctx, input.Class, input.ID, additional.Properties{}, nil)
 	if err != nil {
 		errnf := ErrNotFound{}
 		if errors.As(err, &errnf) {
@@ -85,7 +85,7 @@ func (m *Manager) DeleteObjectReference(
 		return &Error{"repo.putobject", StatusInternalServerError, err}
 	}
 
-	if err := m.updateRefVector(ctx, input.Class, input.ID); err != nil {
+	if err := m.updateRefVector(ctx, principal, input.Class, input.ID); err != nil {
 		return &Error{"update ref vector", StatusInternalServerError, err}
 	}
 

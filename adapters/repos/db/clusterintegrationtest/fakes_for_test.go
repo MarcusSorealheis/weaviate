@@ -69,7 +69,7 @@ func (n *node) init(dirName string, shardStateRaw []byte,
 	nodesClient := clients.NewRemoteNode(&http.Client{})
 	replicaClient := clients.NewReplicationClient(&http.Client{})
 	n.repo = db.New(logger, db.Config{
-		FlushIdleAfter:            60,
+		MemtablesFlushIdleAfter:   60,
 		RootPath:                  localDir,
 		QueryMaximumResults:       10000,
 		MaxImportGoroutinesFactor: 1,
@@ -96,7 +96,7 @@ func (n *node) init(dirName string, shardStateRaw []byte,
 
 	n.migrator = db.NewMigrator(n.repo, logger)
 
-	indices := clusterapi.NewIndices(sharding.NewRemoteIndexIncoming(n.repo))
+	indices := clusterapi.NewIndices(sharding.NewRemoteIndexIncoming(n.repo), n.repo)
 	mux := http.NewServeMux()
 	mux.Handle("/indices/", indices.Indices())
 

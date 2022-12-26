@@ -64,7 +64,7 @@ func singleShardState() *sharding.State {
 		panic(err)
 	}
 
-	s, err := sharding.InitState("test-index", config, fakeNodes{[]string{"node1"}})
+	s, err := sharding.InitState("test-index", config, fakeNodes{[]string{"node1"}}, 1)
 	if err != nil {
 		panic(err)
 	}
@@ -81,7 +81,7 @@ func multiShardState() *sharding.State {
 	}
 
 	s, err := sharding.InitState("multi-shard-test-index", config,
-		fakeNodes{[]string{"node1"}})
+		fakeNodes{[]string{"node1"}}, 1)
 	if err != nil {
 		panic(err)
 	}
@@ -132,6 +132,13 @@ func (f *fakeRemoteClient) PutObject(ctx context.Context, hostName, indexName,
 }
 
 func (f *fakeRemoteClient) GetObject(ctx context.Context, hostName, indexName,
+	shardName string, id strfmt.UUID, props search.SelectProperties,
+	additional additional.Properties,
+) (*storobj.Object, error) {
+	return nil, nil
+}
+
+func (f *fakeRemoteClient) FindObject(ctx context.Context, hostName, indexName,
 	shardName string, id strfmt.UUID, props search.SelectProperties,
 	additional additional.Properties,
 ) (*storobj.Object, error) {
@@ -207,7 +214,7 @@ func (f *fakeRemoteClient) UpdateShardStatus(ctx context.Context, hostName, inde
 }
 
 func (f *fakeRemoteClient) PutFile(ctx context.Context, hostName, indexName, shardName,
-	fileName string, payload io.ReadCloser,
+	fileName string, payload io.ReadSeekCloser,
 ) error {
 	return nil
 }
@@ -231,21 +238,25 @@ func (f *fakeReplicationClient) PutObject(ctx context.Context, host, index, shar
 ) (replica.SimpleResponse, error) {
 	return replica.SimpleResponse{}, nil
 }
+
 func (f *fakeReplicationClient) DeleteObject(ctx context.Context, host, index, shard, requestID string,
 	id strfmt.UUID,
 ) (replica.SimpleResponse, error) {
 	return replica.SimpleResponse{}, nil
 }
+
 func (f *fakeReplicationClient) PutObjects(ctx context.Context, host, index, shard, requestID string,
 	objs []*storobj.Object,
 ) (replica.SimpleResponse, error) {
 	return replica.SimpleResponse{}, nil
 }
+
 func (f *fakeReplicationClient) MergeObject(ctx context.Context, host, index, shard, requestID string,
 	mergeDoc *objects.MergeDocument,
 ) (replica.SimpleResponse, error) {
 	return replica.SimpleResponse{}, nil
 }
+
 func (f *fakeReplicationClient) DeleteObjects(ctx context.Context, host, index, shard, requestID string,
 	docIDs []uint64, dryRun bool,
 ) (replica.SimpleResponse, error) {

@@ -21,6 +21,7 @@ import (
 	"github.com/semi-technologies/weaviate/entities/schema"
 	"github.com/semi-technologies/weaviate/usecases/cluster"
 	"github.com/semi-technologies/weaviate/usecases/config"
+	"github.com/semi-technologies/weaviate/usecases/replica"
 	"github.com/semi-technologies/weaviate/usecases/scaling"
 	"github.com/semi-technologies/weaviate/usecases/schema/migrate"
 	"github.com/semi-technologies/weaviate/usecases/sharding"
@@ -46,7 +47,8 @@ type Manager struct {
 	scaleOut                scaleOut
 	RestoreStatus           sync.Map
 	RestoreError            sync.Map
-	sync.Mutex
+	sync.RWMutex
+	shardingStateLock sync.RWMutex
 }
 
 type VectorConfigParser func(in interface{}) (schema.VectorIndexConfig, error)
@@ -97,7 +99,7 @@ type clusterState interface {
 type scaleOut interface {
 	SetSchemaManager(sm scaling.SchemaManager)
 	Scale(ctx context.Context, className string,
-		old, updated sharding.Config) (*sharding.State, error)
+		updated sharding.Config, prevReplFactor, newReplFactor int64) (*sharding.State, error)
 }
 
 // NewManager creates a new manager
@@ -133,7 +135,7 @@ func NewManager(migrator migrate.Migrator, repo Repo,
 
 	err := m.loadOrInitializeSchema(context.Background())
 	if err != nil {
-		return nil, fmt.Errorf("could not laod or initialize schema: %v", err)
+		return nil, fmt.Errorf("could not load or initialize schema: %v", err)
 	}
 
 	return m, nil
@@ -154,11 +156,6 @@ type State struct {
 	ShardingState map[string]*sharding.State
 }
 
-// SchemaFor a specific kind
-func (s *State) SchemaFor() *models.Schema {
-	return s.ObjectSchema
-}
-
 func (m *Manager) saveSchema(ctx context.Context) error {
 	m.logger.
 		WithField("action", "schema_update").
@@ -169,7 +166,7 @@ func (m *Manager) saveSchema(ctx context.Context) error {
 		return err
 	}
 
-	m.TriggerSchemaUpdateCallbacks()
+	m.triggerSchemaUpdateCallbacks()
 	return nil
 }
 
@@ -180,8 +177,8 @@ func (m *Manager) RegisterSchemaUpdateCallback(callback func(updatedSchema schem
 	m.callbacks = append(m.callbacks, callback)
 }
 
-func (m *Manager) TriggerSchemaUpdateCallbacks() {
-	schema := m.GetSchemaSkipAuth()
+func (m *Manager) triggerSchemaUpdateCallbacks() {
+	schema := m.getSchema()
 
 	for _, cb := range m.callbacks {
 		cb(schema)
@@ -205,16 +202,16 @@ func (m *Manager) loadOrInitializeSchema(ctx context.Context) error {
 	// store in local cache
 	m.state = *schema
 
+	if err := m.migrateSchemaIfNecessary(ctx); err != nil {
+		return fmt.Errorf("migrate schema: %w", err)
+	}
+
+	// make sure that all migrations have completed before checking sync,
+	// otherwise two identical schemas might fail the check based on form rather
+	// than content
+
 	if err := m.startupClusterSync(ctx, schema); err != nil {
 		return errors.Wrap(err, "sync schema with other nodes in the cluster")
-	}
-
-	if err := m.checkSingleShardMigration(ctx); err != nil {
-		return errors.Wrap(err, "migrating sharding state from previous version")
-	}
-
-	if err := m.checkShardingStateForReplication(ctx); err != nil {
-		return errors.Wrap(err, "migrating sharding state from previous version (before replication)")
 	}
 
 	// store in persistent storage
@@ -225,10 +222,27 @@ func (m *Manager) loadOrInitializeSchema(ctx context.Context) error {
 	return nil
 }
 
+func (m *Manager) migrateSchemaIfNecessary(ctx context.Context) error {
+	// introduced when Weaviate started supporting multi-shards per class in v1.8
+	if err := m.checkSingleShardMigration(ctx); err != nil {
+		return errors.Wrap(err, "migrating sharding state from previous version")
+	}
+
+	// introduced when Weaviate started supporting replication in v1.17
+	if err := m.checkShardingStateForReplication(ctx); err != nil {
+		return errors.Wrap(err, "migrating sharding state from previous version (before replication)")
+	}
+
+	// if other migrations become necessary in the future, you can add them here.
+	return nil
+}
+
 func (m *Manager) checkSingleShardMigration(ctx context.Context) error {
 	for _, c := range m.state.ObjectSchema.Classes {
-		if _, ok := m.state.ShardingState[c.Class]; ok {
-			// there is sharding state for this class. Nothing to do
+		m.shardingStateLock.RLock()
+		_, ok := m.state.ShardingState[c.Class]
+		m.shardingStateLock.RUnlock()
+		if ok { // there is sharding state for this class. Nothing to do
 			continue
 		}
 
@@ -248,22 +262,33 @@ func (m *Manager) checkSingleShardMigration(ctx context.Context) error {
 			return err
 		}
 
+		if err := replica.ValidateConfig(c); err != nil {
+			return fmt.Errorf("validate replication config: %w", err)
+		}
+
 		shardState, err := sharding.InitState(c.Class,
-			c.ShardingConfig.(sharding.Config), m.clusterState)
+			c.ShardingConfig.(sharding.Config),
+			m.clusterState, c.ReplicationConfig.Factor)
 		if err != nil {
 			return errors.Wrap(err, "init sharding state")
 		}
 
+		m.shardingStateLock.Lock()
 		if m.state.ShardingState == nil {
 			m.state.ShardingState = map[string]*sharding.State{}
 		}
 		m.state.ShardingState[c.Class] = shardState
+		m.shardingStateLock.Unlock()
+
 	}
 
 	return nil
 }
 
 func (m *Manager) checkShardingStateForReplication(ctx context.Context) error {
+	m.shardingStateLock.Lock()
+	defer m.shardingStateLock.Unlock()
+
 	for _, classState := range m.state.ShardingState {
 		classState.MigrateFromOldFormat()
 	}
@@ -293,11 +318,16 @@ func (m *Manager) parseConfigs(ctx context.Context, schema *State) error {
 		if err := m.parseShardingConfig(ctx, class); err != nil {
 			return errors.Wrapf(err, "class %s: sharding config", class.Class)
 		}
-	}
 
+		if err := replica.ValidateConfig(class); err != nil {
+			return fmt.Errorf("replication config: %w", err)
+		}
+	}
+	m.shardingStateLock.Lock()
 	for _, shardState := range schema.ShardingState {
 		shardState.SetLocalName(m.clusterState.LocalName())
 	}
+	m.shardingStateLock.Unlock()
 
 	return nil
 }

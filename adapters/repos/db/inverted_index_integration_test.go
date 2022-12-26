@@ -66,15 +66,16 @@ func TestIndexByTimestampsNullStatePropLength_AddClass(t *testing.T) {
 		},
 	}}
 	repo := New(logger, Config{
-		FlushIdleAfter:            60,
+		MemtablesFlushIdleAfter:   60,
 		RootPath:                  dirName,
 		QueryMaximumResults:       10000,
 		MaxImportGoroutinesFactor: 1,
 	}, &fakeRemoteClient{}, &fakeNodeResolver{}, &fakeRemoteNodeClient{}, &fakeReplicationClient{}, nil)
 	repo.SetSchemaGetter(schemaGetter)
 	err := repo.WaitForStartup(testCtx())
-	defer repo.Shutdown(context.Background())
 	require.Nil(t, err)
+	defer repo.Shutdown(context.Background())
+
 	migrator := NewMigrator(repo, logger)
 
 	t.Run("add class", func(t *testing.T) {
@@ -292,7 +293,7 @@ func TestIndexByTimestamps_GetClass(t *testing.T) {
 		},
 	}}
 	repo := New(logger, Config{
-		FlushIdleAfter:            60,
+		MemtablesFlushIdleAfter:   60,
 		RootPath:                  dirName,
 		QueryMaximumResults:       10000,
 		MaxImportGoroutinesFactor: 1,

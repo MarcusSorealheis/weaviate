@@ -48,7 +48,7 @@ func init() {
       "url": "https://github.com/semi-technologies",
       "email": "hello@semi.technology"
     },
-    "version": "1.17.0-prealpha"
+    "version": "1.17.0"
   },
   "basePath": "/v1",
   "paths": {
@@ -1093,6 +1093,12 @@ func init() {
           },
           {
             "$ref": "#/parameters/CommonIncludeParameterQuery"
+          },
+          {
+            "$ref": "#/parameters/CommonConsistencyLevelParameterQuery"
+          },
+          {
+            "$ref": "#/parameters/CommonNodeNameParameterQuery"
           }
         ],
         "responses": {
@@ -3043,6 +3049,9 @@ func init() {
             "$ref": "#/definitions/Property"
           }
         },
+        "replicationConfig": {
+          "$ref": "#/definitions/ReplicationConfig"
+        },
         "shardingConfig": {
           "description": "Manage how the index should be sharded and distributed in the cluster",
           "type": "object"
@@ -3871,6 +3880,16 @@ func init() {
         }
       }
     },
+    "ReplicationConfig": {
+      "description": "Configure how replication is executed in a cluster",
+      "type": "object",
+      "properties": {
+        "factor": {
+          "description": "Number of times a class is replicated",
+          "type": "integer"
+        }
+      }
+    },
     "Schema": {
       "description": "Definitions of semantic schemas (also see: https://github.com/semi-technologies/weaviate-semantic-schemas).",
       "type": "object",
@@ -4097,6 +4116,12 @@ func init() {
       "name": "class",
       "in": "query"
     },
+    "CommonConsistencyLevelParameterQuery": {
+      "type": "string",
+      "description": "Determines how many replicas must acknowledge a request before it is considered successful",
+      "name": "consistency_level",
+      "in": "query"
+    },
     "CommonIncludeParameterQuery": {
       "type": "string",
       "description": "Include additional information, such as classification infos. Allowed values include: classification, vector, interpretation",
@@ -4108,6 +4133,12 @@ func init() {
       "format": "int64",
       "description": "The maximum number of items to be returned per page. Default value is set in Weaviate config.",
       "name": "limit",
+      "in": "query"
+    },
+    "CommonNodeNameParameterQuery": {
+      "type": "string",
+      "description": "The target node which should fulfill the request",
+      "name": "node_name",
       "in": "query"
     },
     "CommonOffsetParameterQuery": {
@@ -4195,7 +4226,7 @@ func init() {
       "url": "https://github.com/semi-technologies",
       "email": "hello@semi.technology"
     },
-    "version": "1.17.0-prealpha"
+    "version": "1.17.0"
   },
   "basePath": "/v1",
   "paths": {
@@ -5263,6 +5294,18 @@ func init() {
             "type": "string",
             "description": "Include additional information, such as classification infos. Allowed values include: classification, vector, interpretation",
             "name": "include",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Determines how many replicas must acknowledge a request before it is considered successful",
+            "name": "consistency_level",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "The target node which should fulfill the request",
+            "name": "node_name",
             "in": "query"
           }
         ],
@@ -7350,6 +7393,9 @@ func init() {
             "$ref": "#/definitions/Property"
           }
         },
+        "replicationConfig": {
+          "$ref": "#/definitions/ReplicationConfig"
+        },
         "shardingConfig": {
           "description": "Manage how the index should be sharded and distributed in the cluster",
           "type": "object"
@@ -8222,6 +8268,16 @@ func init() {
         }
       }
     },
+    "ReplicationConfig": {
+      "description": "Configure how replication is executed in a cluster",
+      "type": "object",
+      "properties": {
+        "factor": {
+          "description": "Number of times a class is replicated",
+          "type": "integer"
+        }
+      }
+    },
     "Schema": {
       "description": "Definitions of semantic schemas (also see: https://github.com/semi-technologies/weaviate-semantic-schemas).",
       "type": "object",
@@ -8457,6 +8513,12 @@ func init() {
       "name": "class",
       "in": "query"
     },
+    "CommonConsistencyLevelParameterQuery": {
+      "type": "string",
+      "description": "Determines how many replicas must acknowledge a request before it is considered successful",
+      "name": "consistency_level",
+      "in": "query"
+    },
     "CommonIncludeParameterQuery": {
       "type": "string",
       "description": "Include additional information, such as classification infos. Allowed values include: classification, vector, interpretation",
@@ -8468,6 +8530,12 @@ func init() {
       "format": "int64",
       "description": "The maximum number of items to be returned per page. Default value is set in Weaviate config.",
       "name": "limit",
+      "in": "query"
+    },
+    "CommonNodeNameParameterQuery": {
+      "type": "string",
+      "description": "The target node which should fulfill the request",
+      "name": "node_name",
       "in": "query"
     },
     "CommonOffsetParameterQuery": {

@@ -86,7 +86,13 @@ type RemoteIndexClient interface {
 		targetStatus string) error
 
 	PutFile(ctx context.Context, hostName, indexName, shardName, fileName string,
-		payload io.ReadCloser) error
+		payload io.ReadSeekCloser) error
+
+	// FindObject extends GetObject with retries
+	// It exists to not alter the behavior of GetObject when replication is not enabled
+	FindObject(ctx context.Context, hostname, indexName, shardName string,
+		id strfmt.UUID, props search.SelectProperties,
+		additional additional.Properties) (*storobj.Object, error)
 }
 
 func (ri *RemoteIndex) PutObject(ctx context.Context, shardName string,

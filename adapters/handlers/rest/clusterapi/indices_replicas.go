@@ -39,9 +39,9 @@ type replicator interface {
 		requestID string, docIDs []uint64, dryRun bool) replica.SimpleResponse
 	ReplicateReferences(ctx context.Context, indexName, shardName,
 		requestID string, refs []objects.BatchReference) replica.SimpleResponse
-	CommitReplication(ctx context.Context, indexName,
+	CommitReplication(indexName,
 		shardName, requestID string) interface{}
-	AbortReplication(ctx context.Context, indexName,
+	AbortReplication(indexName,
 		shardName, requestID string) interface{}
 }
 
@@ -63,7 +63,7 @@ var (
 	regxReferences = regexp.MustCompile(`\/replicas\/indices\/([A-Za-z0-9_+-]+)` +
 		`\/shards\/([A-Za-z0-9]+)\/objects/references`)
 	regxIncreaseRepFactor = regexp.MustCompile(`\/replicas\/indices\/([A-Za-z0-9_+-]+)` +
-		`\/replication-factor\/_increase`)
+		`\/replication-factor:increase`)
 	regxCommitPhase = regexp.MustCompile(`\/replicas\/indices\/([A-Za-z0-9_+-]+)` +
 		`\/shards\/([A-Za-z0-9]+):(commit|abort)`)
 )
@@ -159,9 +159,9 @@ func (i *replicatedIndices) executeCommitPhase() http.Handler {
 
 		switch cmd {
 		case "commit":
-			resp = i.shards.CommitReplication(r.Context(), index, shard, requestID)
+			resp = i.shards.CommitReplication(index, shard, requestID)
 		case "abort":
-			resp = i.shards.AbortReplication(r.Context(), index, shard, requestID)
+			resp = i.shards.AbortReplication(index, shard, requestID)
 		default:
 			http.Error(w, fmt.Sprintf("unrecognized command: %s", cmd), http.StatusNotImplemented)
 			return
@@ -276,6 +276,10 @@ func (i *replicatedIndices) patchObject() http.Handler {
 		}
 
 		resp := i.shards.ReplicateUpdate(r.Context(), index, shard, requestID, &mergeDoc)
+		if localIndexNotReady(resp) {
+			http.Error(w, resp.FirstError().Error(), http.StatusServiceUnavailable)
+			return
+		}
 
 		b, err := json.Marshal(resp)
 		if err != nil {
@@ -307,6 +311,10 @@ func (i *replicatedIndices) deleteObject() http.Handler {
 		defer r.Body.Close()
 
 		resp := i.shards.ReplicateDeletion(r.Context(), index, shard, requestID, strfmt.UUID(id))
+		if localIndexNotReady(resp) {
+			http.Error(w, resp.FirstError().Error(), http.StatusServiceUnavailable)
+			return
+		}
 
 		b, err := json.Marshal(resp)
 		if err != nil {
@@ -348,6 +356,10 @@ func (i *replicatedIndices) deleteObjects() http.Handler {
 		}
 
 		resp := i.shards.ReplicateDeletions(r.Context(), index, shard, requestID, docIDs, dryRun)
+		if localIndexNotReady(resp) {
+			http.Error(w, resp.FirstError().Error(), http.StatusServiceUnavailable)
+			return
+		}
 
 		b, err := json.Marshal(resp)
 		if err != nil {
@@ -375,6 +387,10 @@ func (i *replicatedIndices) postObjectSingle(w http.ResponseWriter, r *http.Requ
 	}
 
 	resp := i.shards.ReplicateObject(r.Context(), index, shard, requestID, obj)
+	if localIndexNotReady(resp) {
+		http.Error(w, resp.FirstError().Error(), http.StatusServiceUnavailable)
+		return
+	}
 
 	b, err := json.Marshal(resp)
 	if err != nil {
@@ -402,6 +418,10 @@ func (i *replicatedIndices) postObjectBatch(w http.ResponseWriter, r *http.Reque
 	}
 
 	resp := i.shards.ReplicateObjects(r.Context(), index, shard, requestID, objs)
+	if localIndexNotReady(resp) {
+		http.Error(w, resp.FirstError().Error(), http.StatusServiceUnavailable)
+		return
+	}
 
 	b, err := json.Marshal(resp)
 	if err != nil {
@@ -441,6 +461,10 @@ func (i *replicatedIndices) postRefs() http.Handler {
 		}
 
 		resp := i.shards.ReplicateReferences(r.Context(), index, shard, requestID, refs)
+		if localIndexNotReady(resp) {
+			http.Error(w, resp.FirstError().Error(), http.StatusServiceUnavailable)
+			return
+		}
 
 		b, err := json.Marshal(resp)
 		if err != nil {
@@ -451,4 +475,14 @@ func (i *replicatedIndices) postRefs() http.Handler {
 
 		w.Write(b)
 	})
+}
+
+func localIndexNotReady(resp replica.SimpleResponse) bool {
+	if err := resp.FirstError(); err != nil {
+		re, ok := err.(*replica.Error)
+		if ok && re.IsStatusCode(replica.StatusNotReady) {
+			return true
+		}
+	}
+	return false
 }

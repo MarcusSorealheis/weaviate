@@ -32,7 +32,7 @@ func TestReplicatorReplicaNotFound(t *testing.T) {
 	f := newFakeFactory("C1", "S", []string{})
 	rep := f.newReplicator()
 	err := rep.PutObject(context.Background(), "S", nil)
-	assert.ErrorIs(t, err, errReplicaNotFound)
+	assert.ErrorIs(t, err, errNoReplicaFound)
 }
 
 func TestReplicatorPutObject(t *testing.T) {
@@ -351,6 +351,7 @@ type fakeFactory struct {
 	Nodes          []string
 	shard2replicas map[string][]string
 	Client         *fakeClient
+	RClient        *fakeRClient
 }
 
 func newFakeFactory(class, shard string, nodes []string) *fakeFactory {
@@ -360,6 +361,7 @@ func newFakeFactory(class, shard string, nodes []string) *fakeFactory {
 		Nodes:          nodes,
 		shard2replicas: map[string][]string{shard: nodes},
 		Client:         &fakeClient{},
+		RClient:        &fakeRClient{},
 	}
 }
 
@@ -370,5 +372,12 @@ func (f fakeFactory) newReplicator() *Replicator {
 		f.CLS,
 		shardingState,
 		nodeResolver,
-		f.Client)
+		f.Client,
+		f.RClient)
+}
+
+func (f fakeFactory) newFinder() *Finder {
+	shardingState := newFakeShardingState(f.shard2replicas)
+	nodeResolver := newFakeNodeResolver(f.Nodes)
+	return NewFinder(f.CLS, shardingState, nodeResolver, f.Client)
 }

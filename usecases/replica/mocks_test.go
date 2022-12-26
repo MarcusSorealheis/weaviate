@@ -15,11 +15,25 @@ import (
 	"context"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/semi-technologies/weaviate/entities/additional"
+	"github.com/semi-technologies/weaviate/entities/search"
 	"github.com/semi-technologies/weaviate/entities/storobj"
 	"github.com/semi-technologies/weaviate/usecases/objects"
 	"github.com/semi-technologies/weaviate/usecases/sharding"
 	"github.com/stretchr/testify/mock"
 )
+
+type fakeRClient struct {
+	mock.Mock
+}
+
+func (f *fakeRClient) FindObject(ctx context.Context, host, index, shard string,
+	id strfmt.UUID, props search.SelectProperties,
+	additional additional.Properties,
+) (*storobj.Object, error) {
+	args := f.Called(ctx, host, index, shard, id, props, additional)
+	return args.Get(0).(*storobj.Object), args.Error(1)
+}
 
 type fakeClient struct {
 	mock.Mock
@@ -77,6 +91,14 @@ func (f *fakeClient) Abort(ctx context.Context, host, index, shard, requestID st
 	return args.Get(0).(SimpleResponse), args.Error(1)
 }
 
+func (f *fakeClient) FindObject(ctx context.Context, host, index, shard string,
+	id strfmt.UUID, props search.SelectProperties,
+	additional additional.Properties,
+) (*storobj.Object, error) {
+	args := f.Called(ctx, host, index, shard, id, props, additional)
+	return args.Get(0).(*storobj.Object), args.Error(1)
+}
+
 // Replica finder
 type fakeShardingState struct {
 	ShardToReplicas map[string][]string
@@ -93,6 +115,10 @@ func (f *fakeShardingState) ShardingState(class string) *sharding.State {
 		state.Physical[shard] = sharding.Physical{BelongsToNodes: nodes}
 	}
 	return &state
+}
+
+func (f *fakeShardingState) NodeName() string {
+	return "Coordinator"
 }
 
 // node resolver

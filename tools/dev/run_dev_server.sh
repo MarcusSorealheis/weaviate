@@ -9,7 +9,6 @@ export GO111MODULE=on
 export LOG_LEVEL=${LOG_LEVEL:-"debug"}
 export LOG_FORMAT=${LOG_FORMAT:-"text"}
 export PROMETHEUS_MONITORING_ENABLED=${PROMETHEUS_MONITORING_ENABLED:-"true"}
-export ENABLE_EXPERIMENTAL_BM25=${ENABLE_EXPERIMENTAL_BM25:-"true"}
 export GO_BLOCK_PROFILE_RATE=${GO_BLOCK_PROFILE_RATE:-"20"}
 export GO_MUTEX_PROFILE_FRACTION=${GO_MUTEX_PROFILE_FRACTION:-"20"}
 export PERSISTENCE_DATA_PATH=${PERSISTENCE_DATA_PATH:-"./data"}
@@ -250,6 +249,21 @@ case $CONFIG in
       AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=true \
       DEFAULT_VECTORIZER_MODULE=text2vec-openai \
       ENABLE_MODULES="text2vec-openai" \
+      go_run ./cmd/weaviate-server \
+        --scheme http \
+        --host "127.0.0.1" \
+        --port 8080 \
+        --read-timeout=600s \
+        --write-timeout=600s
+    ;;
+
+  local-qna-openai)
+      CONTEXTIONARY_URL=localhost:9999 \
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=true \
+      DEFAULT_VECTORIZER_MODULE=text2vec-contextionary \
+      QNA_INFERENCE_API="http://localhost:8001" \
+      CLUSTER_HOSTNAME="node1" \
+      ENABLE_MODULES="text2vec-contextionary,qna-openai" \
       go_run ./cmd/weaviate-server \
         --scheme http \
         --host "127.0.0.1" \

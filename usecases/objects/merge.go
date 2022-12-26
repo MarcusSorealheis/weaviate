@@ -54,7 +54,7 @@ func (m *Manager) MergeObject(ctx context.Context, principal *models.Principal, 
 	if updates.Properties == nil {
 		updates.Properties = map[string]interface{}{}
 	}
-	obj, err := m.vectorRepo.Object(ctx, cls, id, nil, additional.Properties{})
+	obj, err := m.vectorRepo.Object(ctx, cls, id, nil, additional.Properties{}, nil)
 	if err != nil {
 		return &Error{"repo.object", StatusInternalServerError, err}
 	}
@@ -146,8 +146,11 @@ func (m *Manager) mergeObjectSchemaAndVectorize(ctx context.Context, className s
 	// Note: vector could be a nil vector in case a vectorizer is configured,
 	// then the vectorizer will set it
 	obj := &models.Object{Class: className, Properties: merged, Vector: vector}
-
-	if err := m.modulesProvider.UpdateVector(ctx, obj, objDiff, m.findObject, m.logger); err != nil {
+	class, err := m.schemaManager.GetClass(ctx, principal, className)
+	if err != nil {
+		return nil, err
+	}
+	if err := m.modulesProvider.UpdateVector(ctx, obj, class, objDiff, m.findObject, m.logger); err != nil {
 		return nil, err
 	}
 

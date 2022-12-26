@@ -216,6 +216,12 @@ func (m *ContextionaryModule) VectorizeObject(ctx context.Context,
 	return m.vectorizer.Object(ctx, obj, objDiff, icheck)
 }
 
+func (m *ContextionaryModule) VectorizeInput(ctx context.Context,
+	input string, cfg moduletools.ClassConfig,
+) ([]float32, error) {
+	return m.vectorizer.Corpi(ctx, []string{input})
+}
+
 func (m *ContextionaryModule) Arguments() map[string]modulecapabilities.GraphQLArgument {
 	return m.graphqlProvider.Arguments()
 }
@@ -240,4 +246,5 @@ func (m *ContextionaryModule) MetaInfo() (map[string]interface{}, error) {
 var (
 	_ = modulecapabilities.Module(New())
 	_ = modulecapabilities.Vectorizer(New())
+	_ = modulecapabilities.InputVectorizer(New())
 )

@@ -110,12 +110,17 @@ func multiShardState(nodeCount int) *sharding.State {
 	}
 
 	s, err := sharding.InitState("multi-shard-test-index", config,
-		fakeNodes{nodeList})
+		fakeNodes{nodeList}, 1)
 	if err != nil {
 		panic(err)
 	}
 
 	return s
+}
+
+func truePointer() *bool {
+	b := true
+	return &b
 }
 
 func class() *models.Class {
@@ -127,13 +132,15 @@ func class() *models.Class {
 		InvertedIndexConfig: invertedConfig(),
 		Properties: []*models.Property{
 			{
-				Name:         "description",
-				DataType:     []string{string(schema.DataTypeText)},
-				Tokenization: "word",
+				Name:          "description",
+				DataType:      []string{string(schema.DataTypeText)},
+				Tokenization:  "word",
+				IndexInverted: truePointer(),
 			},
 			{
-				Name:     "other_property",
-				DataType: []string{string(schema.DataTypeText)},
+				Name:          "other_property",
+				DataType:      []string{string(schema.DataTypeText)},
+				IndexInverted: truePointer(),
 			},
 			{
 				Name:     "date_property",
@@ -309,7 +316,7 @@ func manuallyResolveRef(t *testing.T, obj *models.Object,
 			// find referenced object to get his actual vector from DB
 			require.NotNil(t, repo)
 			res, err := repo.Object(context.Background(), parsed.Class, parsed.TargetID,
-				nil, additional.Properties{Vector: true})
+				nil, additional.Properties{Vector: true}, nil)
 			require.Nil(t, err)
 			require.NotNil(t, res)
 			out[i] = map[string]interface{}{

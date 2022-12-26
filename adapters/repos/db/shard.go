@@ -68,9 +68,10 @@ type Shard struct {
 	shutDownWg          sync.WaitGroup
 	maxNumberGoroutines int
 
-	status      storagestate.Status
-	statusLock  sync.Mutex
-	stopMetrics chan struct{}
+	status              storagestate.Status
+	statusLock          sync.Mutex
+	propertyIndicesLock sync.RWMutex
+	stopMetrics         chan struct{}
 
 	docIdLock []sync.Mutex
 	// replication
@@ -86,7 +87,7 @@ type job struct {
 }
 
 func NewShard(ctx context.Context, promMetrics *monitoring.PrometheusMetrics,
-	shardName string, index *Index,
+	shardName string, index *Index, class *models.Class,
 ) (*Shard, error) {
 	before := time.Now()
 
@@ -134,7 +135,7 @@ func NewShard(ctx context.Context, promMetrics *monitoring.PrometheusMetrics,
 		defer s.vectorIndex.PostStartup()
 	}
 
-	if err := s.initNonVector(ctx); err != nil {
+	if err := s.initNonVector(ctx, class); err != nil {
 		return nil, errors.Wrapf(err, "init shard %q", s.ID())
 	}
 
@@ -197,7 +198,7 @@ func (s *Shard) initVectorIndex(
 	return nil
 }
 
-func (s *Shard) initNonVector(ctx context.Context) error {
+func (s *Shard) initNonVector(ctx context.Context, class *models.Class) error {
 	err := s.initDBFile(ctx)
 	if err != nil {
 		return errors.Wrapf(err, "init shard %q: shard db", s.ID())
@@ -224,7 +225,7 @@ func (s *Shard) initNonVector(ctx context.Context) error {
 	}
 	s.propLengths = propLengths
 
-	if err := s.initProperties(); err != nil {
+	if err := s.initProperties(class); err != nil {
 		return errors.Wrapf(err, "init shard %q: init per property indices", s.ID())
 	}
 
@@ -267,7 +268,13 @@ func (s *Shard) initDBFile(ctx context.Context) error {
 		lsmkv.WithStrategy(lsmkv.StrategyReplace),
 		lsmkv.WithSecondaryIndices(1),
 		lsmkv.WithMonitorCount(),
-		lsmkv.WithIdleThreshold(time.Duration(s.index.Config.FlushIdleAfter)*time.Second),
+		lsmkv.WithIdleThreshold(time.Duration(s.index.Config.MemtablesFlushIdleAfter)*time.Second),
+		lsmkv.WithDynamicMemtableSizing(
+			s.index.Config.MemtablesInitialSizeMB,
+			s.index.Config.MemtablesMaxSizeMB,
+			s.index.Config.MemtablesMinActiveSeconds,
+			s.index.Config.MemtablesMaxActiveSeconds,
+		),
 	)
 	if err != nil {
 		return errors.Wrap(err, "create objects bucket")
@@ -332,8 +339,9 @@ func (s *Shard) drop(force bool) error {
 
 	// TODO: can we remove this?
 	s.deletedDocIDs.BulkRemove(s.deletedDocIDs.GetAll())
-
+	s.propertyIndicesLock.Lock()
 	err = s.propertyIndices.DropAll(ctx)
+	s.propertyIndicesLock.Unlock()
 	if err != nil {
 		return errors.Wrapf(err, "remove property specific indices at %s", s.DBPathLSM())
 	}
@@ -348,7 +356,7 @@ func (s *Shard) addIDProperty(ctx context.Context) error {
 
 	err := s.store.CreateOrLoadBucket(ctx,
 		helpers.BucketFromPropNameLSM(filters.InternalPropID),
-		lsmkv.WithIdleThreshold(time.Duration(s.index.Config.FlushIdleAfter)*time.Second),
+		lsmkv.WithIdleThreshold(time.Duration(s.index.Config.MemtablesFlushIdleAfter)*time.Second),
 		lsmkv.WithStrategy(lsmkv.StrategySetCollection))
 	if err != nil {
 		return err
@@ -356,7 +364,7 @@ func (s *Shard) addIDProperty(ctx context.Context) error {
 
 	err = s.store.CreateOrLoadBucket(ctx,
 		helpers.HashBucketFromPropNameLSM(filters.InternalPropID),
-		lsmkv.WithIdleThreshold(time.Duration(s.index.Config.FlushIdleAfter)*time.Second),
+		lsmkv.WithIdleThreshold(time.Duration(s.index.Config.MemtablesFlushIdleAfter)*time.Second),
 		lsmkv.WithStrategy(lsmkv.StrategyReplace))
 	if err != nil {
 		return err
@@ -401,6 +409,14 @@ func (s *Shard) addPropertyLength(ctx context.Context, prop *models.Property) er
 	if s.isReadOnly() {
 		return storagestate.ErrStatusReadOnly
 	}
+	dt := schema.DataType(prop.DataType[0])
+	// some datatypes are not added to the inverted index, so we can skip them here
+	switch dt {
+	case schema.DataTypeGeoCoordinates, schema.DataTypePhoneNumber, schema.DataTypeBlob, schema.DataTypeInt,
+		schema.DataTypeNumber, schema.DataTypeBoolean, schema.DataTypeDate:
+		return nil
+	default:
+	}
 
 	err := s.store.CreateOrLoadBucket(ctx,
 		helpers.BucketFromPropNameLSM(prop.Name+filters.InternalPropertyLength),
@@ -444,14 +460,14 @@ func (s *Shard) addNullState(ctx context.Context, prop *models.Property) error {
 func (s *Shard) addCreationTimeUnixProperty(ctx context.Context) error {
 	err := s.store.CreateOrLoadBucket(ctx,
 		helpers.BucketFromPropNameLSM(filters.InternalPropCreationTimeUnix),
-		lsmkv.WithIdleThreshold(time.Duration(s.index.Config.FlushIdleAfter)*time.Second),
+		lsmkv.WithIdleThreshold(time.Duration(s.index.Config.MemtablesFlushIdleAfter)*time.Second),
 		lsmkv.WithStrategy(lsmkv.StrategySetCollection))
 	if err != nil {
 		return err
 	}
 	err = s.store.CreateOrLoadBucket(ctx,
 		helpers.HashBucketFromPropNameLSM(filters.InternalPropCreationTimeUnix),
-		lsmkv.WithIdleThreshold(time.Duration(s.index.Config.FlushIdleAfter)*time.Second),
+		lsmkv.WithIdleThreshold(time.Duration(s.index.Config.MemtablesFlushIdleAfter)*time.Second),
 		lsmkv.WithStrategy(lsmkv.StrategyReplace))
 	if err != nil {
 		return err
@@ -463,14 +479,14 @@ func (s *Shard) addCreationTimeUnixProperty(ctx context.Context) error {
 func (s *Shard) addLastUpdateTimeUnixProperty(ctx context.Context) error {
 	err := s.store.CreateOrLoadBucket(ctx,
 		helpers.BucketFromPropNameLSM(filters.InternalPropLastUpdateTimeUnix),
-		lsmkv.WithIdleThreshold(time.Duration(s.index.Config.FlushIdleAfter)*time.Second),
+		lsmkv.WithIdleThreshold(time.Duration(s.index.Config.MemtablesFlushIdleAfter)*time.Second),
 		lsmkv.WithStrategy(lsmkv.StrategySetCollection))
 	if err != nil {
 		return err
 	}
 	err = s.store.CreateOrLoadBucket(ctx,
 		helpers.HashBucketFromPropNameLSM(filters.InternalPropLastUpdateTimeUnix),
-		lsmkv.WithIdleThreshold(time.Duration(s.index.Config.FlushIdleAfter)*time.Second),
+		lsmkv.WithIdleThreshold(time.Duration(s.index.Config.MemtablesFlushIdleAfter)*time.Second),
 		lsmkv.WithStrategy(lsmkv.StrategyReplace))
 	if err != nil {
 		return err
@@ -487,7 +503,7 @@ func (s *Shard) addProperty(ctx context.Context, prop *models.Property) error {
 		err := s.store.CreateOrLoadBucket(ctx,
 			helpers.BucketFromPropNameLSM(helpers.MetaCountProp(prop.Name)),
 			lsmkv.WithStrategy(lsmkv.StrategySetCollection), // ref props do not have frequencies -> Set
-			lsmkv.WithIdleThreshold(time.Duration(s.index.Config.FlushIdleAfter)*time.Second),
+			lsmkv.WithIdleThreshold(time.Duration(s.index.Config.MemtablesFlushIdleAfter)*time.Second),
 		)
 		if err != nil {
 			return err
@@ -496,7 +512,7 @@ func (s *Shard) addProperty(ctx context.Context, prop *models.Property) error {
 		err = s.store.CreateOrLoadBucket(ctx,
 			helpers.HashBucketFromPropNameLSM(helpers.MetaCountProp(prop.Name)),
 			lsmkv.WithStrategy(lsmkv.StrategyReplace),
-			lsmkv.WithIdleThreshold(time.Duration(s.index.Config.FlushIdleAfter)*time.Second),
+			lsmkv.WithIdleThreshold(time.Duration(s.index.Config.MemtablesFlushIdleAfter)*time.Second),
 		)
 		if err != nil {
 			return err
@@ -510,7 +526,7 @@ func (s *Shard) addProperty(ctx context.Context, prop *models.Property) error {
 	var mapOpts []lsmkv.BucketOption
 	if inverted.HasFrequency(schema.DataType(prop.DataType[0])) {
 		mapOpts = append(mapOpts, lsmkv.WithStrategy(lsmkv.StrategyMapCollection))
-		mapOpts = append(mapOpts, lsmkv.WithIdleThreshold(time.Duration(s.index.Config.FlushIdleAfter)*time.Second))
+		mapOpts = append(mapOpts, lsmkv.WithIdleThreshold(time.Duration(s.index.Config.MemtablesFlushIdleAfter)*time.Second))
 		if s.versioner.Version() < 2 {
 			mapOpts = append(mapOpts, lsmkv.WithLegacyMapSorting())
 		}
@@ -526,7 +542,7 @@ func (s *Shard) addProperty(ctx context.Context, prop *models.Property) error {
 
 	err = s.store.CreateOrLoadBucket(ctx, helpers.HashBucketFromPropNameLSM(prop.Name),
 		lsmkv.WithStrategy(lsmkv.StrategyReplace),
-		lsmkv.WithIdleThreshold(time.Duration(s.index.Config.FlushIdleAfter)*time.Second),
+		lsmkv.WithIdleThreshold(time.Duration(s.index.Config.MemtablesFlushIdleAfter)*time.Second),
 	)
 	if err != nil {
 		return err
@@ -577,4 +593,13 @@ func (s *Shard) notifyReady() {
 	s.index.logger.
 		WithField("action", "startup").
 		Debugf("shard=%s is ready", s.name)
+}
+
+func (s *Shard) objectCount() int {
+	b := s.store.Bucket(helpers.ObjectsBucketLSM)
+	if b == nil {
+		return 0
+	}
+
+	return b.Count()
 }

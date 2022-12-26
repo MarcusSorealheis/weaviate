@@ -131,8 +131,7 @@ func (m *Provider) Init(ctx context.Context,
 		return errors.Wrap(err, "validate modules")
 	}
 	if m.HasMultipleVectorizers() {
-		logger.Warn("Multiple vector spaces are present, " +
-			"GraphQL Explore and REST API list objects endpoint module include params has been disabled as a result.")
+		logger.Warn("Multiple vector spaces are present, GraphQL Explore and REST API list objects endpoint module include params has been disabled as a result.")
 	}
 	return nil
 }
@@ -484,6 +483,7 @@ func (m *Provider) additionalExtend(ctx context.Context, in []search.Result,
 			if err := m.checkCapabilities(allAdditionalProperties, moduleParams, capability); err != nil {
 				return nil, err
 			}
+			cfg := NewClassBasedModuleConfig(class, "")
 			for name, value := range moduleParams {
 				additionalPropertyFn := m.getAdditionalPropertyFn(allAdditionalProperties[name], capability)
 				if additionalPropertyFn != nil && value != nil {
@@ -492,7 +492,7 @@ func (m *Provider) additionalExtend(ctx context.Context, in []search.Result,
 						searchVectorValue.SetSearchVector(searchVector)
 						searchValue = searchVectorValue
 					}
-					resArray, err := additionalPropertyFn(ctx, toBeExtended, searchValue, nil, argumentModuleParams)
+					resArray, err := additionalPropertyFn(ctx, toBeExtended, searchValue, nil, argumentModuleParams, cfg)
 					if err != nil {
 						return nil, errors.Errorf("extend %s: %v", name, err)
 					}
@@ -640,6 +640,26 @@ func (m *Provider) CrossClassVectorFromSearchParam(ctx context.Context,
 	}
 
 	panic("VectorFromParams was called without any known params present")
+}
+
+func (m *Provider) VectorFromInput(ctx context.Context,
+	className string, input string,
+) ([]float32, error) {
+	class, err := m.getClass(className)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, mod := range m.GetAll() {
+		if m.shouldIncludeClassArgument(class, mod.Name(), mod.Type()) {
+			if vectorizer, ok := mod.(modulecapabilities.InputVectorizer); ok {
+				cfg := NewClassBasedModuleConfig(class, mod.Name())
+				return vectorizer.VectorizeInput(ctx, input, cfg)
+			}
+		}
+	}
+
+	panic("VectorFromInput was called without vectorizer")
 }
 
 // ParseClassifierSettings parses and adds classifier specific settings

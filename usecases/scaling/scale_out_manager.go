@@ -78,14 +78,14 @@ func (som *ScaleOutManager) SetSchemaManager(sm SchemaManager) {
 // make sure to broadcast that state to all nodes as part of the "update"
 // transaction.
 func (som *ScaleOutManager) Scale(ctx context.Context, className string,
-	old, updated sharding.Config,
+	updated sharding.Config, prevReplFactor, newReplFactor int64,
 ) (*sharding.State, error) {
-	if updated.Replicas > old.Replicas {
-		return som.scaleOut(ctx, className, old, updated)
+	if newReplFactor > prevReplFactor {
+		return som.scaleOut(ctx, className, updated, newReplFactor)
 	}
 
-	if updated.Replicas < old.Replicas {
-		return som.scaleIn(ctx, className, old, updated)
+	if newReplFactor < prevReplFactor {
+		return som.scaleIn(ctx, className, updated)
 	}
 
 	return nil, nil
@@ -107,7 +107,7 @@ func (som *ScaleOutManager) Scale(ctx context.Context, className string,
 // Follow the in-line comments to see how this implementation achieves scalign
 // out
 func (som *ScaleOutManager) scaleOut(ctx context.Context, className string,
-	old, updated sharding.Config,
+	updated sharding.Config, replFactor int64,
 ) (*sharding.State, error) {
 	// First identify what the sharding state was before this change. This is
 	// mainly to be able to compare the diff later, so we know where we need to
@@ -127,7 +127,7 @@ func (som *ScaleOutManager) scaleOut(ctx context.Context, className string,
 	// Identify all shards of the class and adjust the replicas. After this is
 	// done, the affected shards now belong to more nodes than they did before.
 	for name, shard := range ssAfter.Physical {
-		shard.AdjustReplicas(updated.Replicas, som.clusterState)
+		shard.AdjustReplicas(int(replFactor), som.clusterState)
 		ssAfter.Physical[name] = shard
 	}
 	// However, so far we have only updated config, now we also need to actually
@@ -149,7 +149,7 @@ func (som *ScaleOutManager) scaleOut(ctx context.Context, className string,
 				return nil
 			})
 		} else {
-			if err := som.LocalScaleOut(ctx, className, ssBefore, &ssAfter); err != nil {
+			if err := som.localScaleOut(ctx, className, name, ssBefore, &ssAfter); err != nil {
 				return nil, fmt.Errorf("increase local replication factor: %w", err)
 			}
 		}
@@ -181,67 +181,80 @@ func (som *ScaleOutManager) LocalScaleOut(ctx context.Context,
 	// - Reinit the shard to recognize the copied files
 	// - Release the single-shard backup
 	for shardName := range ssBefore.Physical {
-		// Create backup of the single shard
-		bakID := fmt.Sprintf("_internal_scaleout_%s", uuid.New().String())
-		bak, err := som.backerUpper.SingleShardBackup(ctx, bakID, className, shardName)
-		if err != nil {
-			return errors.Wrap(err, "create snapshot")
+		if !ssBefore.IsShardLocal(shardName) {
+			continue
+		}
+		if err := som.localScaleOut(ctx, className, shardName, ssBefore, ssAfter); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (som *ScaleOutManager) localScaleOut(ctx context.Context,
+	className, shardName string, ssBefore, ssAfter *sharding.State,
+) error {
+	// Create backup of the single shard
+	bakID := fmt.Sprintf("_internal_scaleout_%s", uuid.New().String())
+	bak, err := som.backerUpper.SingleShardBackup(ctx, bakID, className, shardName)
+	if err != nil {
+		return errors.Wrap(err, "create snapshot")
+	}
+
+	// Figure out which nodes are new by diffing the before and after state
+	// TODO: This manual diffing is ugly, refactor!
+	newNodes := ssAfter.Physical[shardName].BelongsToNodes
+	previousNodes := ssBefore.Physical[shardName].BelongsToNodes
+	// This relies on the convention that new nodes are always appended at the end
+	additions := newNodes[len(previousNodes):]
+
+	// Iterate over the new target nodes and copy files
+	for _, targetNode := range additions {
+		bakShard := bak.Shards[0]
+		if bakShard.Name != shardName {
+			// this sanity check is only needed because of the Shards[0] above. If this
+			// supports multi-shard, we need a better logic anyway
+			return fmt.Errorf("shard name mismatch in backup: %q vs %q", bakShard.Name,
+				shardName)
 		}
 
-		// Figure out which nodes are new by diffing the before and after state
-		// TODO: This manual diffing is ugly, refactor!
-		newNodes := ssAfter.Physical[shardName].BelongsToNodes
-		previousNodes := ssBefore.Physical[shardName].BelongsToNodes
-		// This relies on the convention that new nodes are always appended at the end
-		additions := newNodes[len(previousNodes):]
+		// Create an empty shard on the remote node. This is a requirement to
+		// copy files in the next step. If the empty shard didn't exist, we'd
+		// have no copy target which could receive the files.
+		if err := som.CreateShard(ctx, targetNode, className, shardName); err != nil {
+			return fmt.Errorf("create new shard on remote node: %w", err)
+		}
 
-		// Iterate over the new target nodes and copy files
-		for _, targetNode := range additions {
-			bakShard := bak.Shards[0]
-			if bakShard.Name != shardName {
-				// this sanity check is only needed because of the Shards[0] above. If this
-				// supports multi-shard, we need a better logic anyway
-				return fmt.Errorf("shard name mismatch in backup: %q vs %q", bakShard.Name,
-					shardName)
-			}
-
-			// Create an empty shard on the remote node. This is a requirement to
-			// copy files in the next step. If the empty shard didn't exist, we'd
-			// have no copy target which could receive the files.
-			if err := som.CreateShard(ctx, targetNode, className, shardName); err != nil {
-				return fmt.Errorf("create new shard on remote node: %w", err)
-			}
-
-			// Transfer each file that's part of the backup.
-			for _, file := range bakShard.Files {
-				err := som.PutFile(ctx, file, targetNode, className, shardName)
-				if err != nil {
-					return fmt.Errorf("copy files to remote node: %w", err)
-				}
-			}
-
-			// Transfer shard metadata files
-			err := som.PutFile(ctx, bakShard.ShardVersionPath, targetNode, className, shardName)
+		// Transfer each file that's part of the backup.
+		for _, file := range bakShard.Files {
+			err := som.PutFile(ctx, file, targetNode, className, shardName)
 			if err != nil {
-				return fmt.Errorf("copy shard version to remote node: %w", err)
+				return fmt.Errorf("copy files to remote node: %w", err)
 			}
+		}
 
-			err = som.PutFile(ctx, bakShard.DocIDCounterPath, targetNode, className, shardName)
-			if err != nil {
-				return fmt.Errorf("copy index counter to remote node: %w", err)
-			}
+		// Transfer shard metadata files
+		err := som.PutFile(ctx, bakShard.ShardVersionPath, targetNode, className, shardName)
+		if err != nil {
+			return fmt.Errorf("copy shard version to remote node: %w", err)
+		}
 
-			err = som.PutFile(ctx, bakShard.PropLengthTrackerPath, targetNode, className, shardName)
-			if err != nil {
-				return fmt.Errorf("copy prop length tracker to remote node: %w", err)
-			}
+		err = som.PutFile(ctx, bakShard.DocIDCounterPath, targetNode, className, shardName)
+		if err != nil {
+			return fmt.Errorf("copy index counter to remote node: %w", err)
+		}
 
-			// Now that all files are on the remote node's new shard, the shard needs
-			// to be reinitialized. Otherwise, it would not recognize the files when
-			// serving traffic later.
-			if err := som.ReinitShard(ctx, targetNode, className, shardName); err != nil {
-				return fmt.Errorf("create new shard on remote node: %w", err)
-			}
+		err = som.PutFile(ctx, bakShard.PropLengthTrackerPath, targetNode, className, shardName)
+		if err != nil {
+			return fmt.Errorf("copy prop length tracker to remote node: %w", err)
+		}
+
+		// Now that all files are on the remote node's new shard, the shard needs
+		// to be reinitialized. Otherwise, it would not recognize the files when
+		// serving traffic later.
+		if err := som.ReInitShard(ctx, targetNode, className, shardName); err != nil {
+			return fmt.Errorf("create new shard on remote node: %w", err)
 		}
 
 		// Clean up after ourselves and prevent blocking future backups.
@@ -254,7 +267,7 @@ func (som *ScaleOutManager) LocalScaleOut(ctx context.Context,
 }
 
 func (som *ScaleOutManager) scaleIn(ctx context.Context, className string,
-	old, updated sharding.Config,
+	updated sharding.Config,
 ) (*sharding.State, error) {
 	return nil, errors.Errorf("scaling in (reducing replica count) not supported yet")
 }
@@ -288,7 +301,7 @@ func (som *ScaleOutManager) CreateShard(ctx context.Context,
 	return som.nodes.CreateShard(ctx, hostname, className, shardName)
 }
 
-func (som *ScaleOutManager) ReinitShard(ctx context.Context,
+func (som *ScaleOutManager) ReInitShard(ctx context.Context,
 	targetNode, className, shardName string,
 ) error {
 	hostname, ok := som.clusterState.NodeHostname(targetNode)
@@ -296,15 +309,15 @@ func (som *ScaleOutManager) ReinitShard(ctx context.Context,
 		return fmt.Errorf("resolve hostname for node %q", targetNode)
 	}
 
-	return som.nodes.ReinitShard(ctx, hostname, className, shardName)
+	return som.nodes.ReInitShard(ctx, hostname, className, shardName)
 }
 
 type nodeClient interface {
 	PutFile(ctx context.Context, hostName, indexName,
-		shardName, fileName string, payload io.ReadCloser) error
+		shardName, fileName string, payload io.ReadSeekCloser) error
 	CreateShard(ctx context.Context,
 		hostName, indexName, shardName string) error
-	ReinitShard(ctx context.Context,
+	ReInitShard(ctx context.Context,
 		hostName, indexName, shardName string) error
 	IncreaseReplicationFactor(ctx context.Context, hostName, indexName string,
 		ssBefore, ssAfter *sharding.State) error

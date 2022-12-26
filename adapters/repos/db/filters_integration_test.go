@@ -40,7 +40,7 @@ func TestFilters(t *testing.T) {
 	logger, _ := test.NewNullLogger()
 	schemaGetter := &fakeSchemaGetter{shardState: singleShardState()}
 	repo := New(logger, Config{
-		FlushIdleAfter:            60,
+		MemtablesFlushIdleAfter:   60,
 		RootPath:                  dirName,
 		QueryMaximumResults:       10000,
 		MaxImportGoroutinesFactor: 1,
@@ -840,7 +840,7 @@ func TestGeoPropUpdateJourney(t *testing.T) {
 	logger, _ := test.NewNullLogger()
 	schemaGetter := &fakeSchemaGetter{shardState: singleShardState()}
 	repo := New(logger, Config{
-		FlushIdleAfter:            60,
+		MemtablesFlushIdleAfter:   60,
 		RootPath:                  dirName,
 		QueryMaximumResults:       10000,
 		MaxImportGoroutinesFactor: 1,
@@ -848,6 +848,7 @@ func TestGeoPropUpdateJourney(t *testing.T) {
 	repo.SetSchemaGetter(schemaGetter)
 	err := repo.WaitForStartup(testCtx())
 	require.Nil(t, err)
+	defer repo.Shutdown(context.Background())
 
 	migrator := NewMigrator(repo, logger)
 
@@ -949,7 +950,7 @@ func TestCasingOfOperatorCombinations(t *testing.T) {
 	logger, _ := test.NewNullLogger()
 	schemaGetter := &fakeSchemaGetter{shardState: singleShardState()}
 	repo := New(logger, Config{
-		FlushIdleAfter:            60,
+		MemtablesFlushIdleAfter:   60,
 		RootPath:                  dirName,
 		QueryMaximumResults:       10000,
 		MaxImportGoroutinesFactor: 1,
@@ -957,6 +958,7 @@ func TestCasingOfOperatorCombinations(t *testing.T) {
 	repo.SetSchemaGetter(schemaGetter)
 	err := repo.WaitForStartup(testCtx())
 	require.Nil(t, err)
+	defer repo.Shutdown(context.Background())
 
 	migrator := NewMigrator(repo, logger)
 
@@ -1397,7 +1399,7 @@ func TestFilteringAfterDeletion(t *testing.T) {
 	logger, _ := test.NewNullLogger()
 	schemaGetter := &fakeSchemaGetter{shardState: singleShardState()}
 	repo := New(logger, Config{
-		FlushIdleAfter:            60,
+		MemtablesFlushIdleAfter:   60,
 		RootPath:                  dirName,
 		QueryMaximumResults:       10000,
 		MaxImportGoroutinesFactor: 1,
@@ -1405,6 +1407,7 @@ func TestFilteringAfterDeletion(t *testing.T) {
 	repo.SetSchemaGetter(schemaGetter)
 	err := repo.WaitForStartup(testCtx())
 	require.Nil(t, err)
+	defer repo.Shutdown(context.Background())
 
 	migrator := NewMigrator(repo, logger)
 	class := &models.Class{

@@ -14,18 +14,9 @@ package replica
 import (
 	"context"
 	"fmt"
-	"time"
 
-	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 )
-
-var errReplicaNotFound = errors.New("no replica found")
-
-// replicaFinder find nodes associated with a specific shard
-type replicaFinder interface {
-	FindReplicas(shardName string) []string
-}
 
 // readyOp asks a replica to be read to second phase commit
 type readyOp func(ctx context.Context, host, requestID string) error
@@ -35,27 +26,27 @@ type commitOp[T any] func(ctx context.Context, host, requestID string) (T, error
 
 // coordinator coordinates replication of write request
 type coordinator[T any] struct {
-	Client        // needed to commit and abort operation
-	replicaFinder // host names of replicas
-	class         string
-	shard         string
-	requestID     string
+	Client              // needed to commit and abort operation
+	resolver  *resolver // host names of replicas
+	class     string
+	shard     string
+	requestID string
 	// responses collect all responses of batch job
 	responses []T
 	nodes     []string
 }
 
-func newCoordinator[T any](r *Replicator, shard string) *coordinator[T] {
+func newCoordinator[T any](r *Replicator, shard, requestID string) *coordinator[T] {
 	return &coordinator[T]{
 		Client: r.client,
-		replicaFinder: &finder{
-			schema:   r.stateGetter,
-			resolver: r.resolver,
-			class:    r.class,
+		resolver: &resolver{
+			schema:       r.stateGetter,
+			nodeResolver: r.resolver,
+			class:        r.class,
 		},
 		class:     r.class,
 		shard:     shard,
-		requestID: time.Now().String(), // TODO: use a counter to build request id
+		requestID: requestID,
 	}
 }
 
@@ -114,15 +105,20 @@ func (c *coordinator[T]) commitAll(ctx context.Context, replicas []string, op co
 
 // Replicate writes on all replicas of specific shard
 func (c *coordinator[T]) Replicate(ctx context.Context, ask readyOp, com commitOp[T]) error {
-	c.nodes = c.FindReplicas(c.shard)
-	if len(c.nodes) == 0 {
-		return fmt.Errorf("%w : class %q shard %q", errReplicaNotFound, c.class, c.shard)
+	state, err := c.resolver.State(c.shard)
+	if err == nil {
+		_, err = state.ConsistencyLevel(All)
+	}
+	c.nodes = state.Hosts
+	const msg = "replication with consistency level 'ALL'"
+	if err != nil {
+		return fmt.Errorf("%s: %w : class %q shard %q", msg, err, c.class, c.shard)
 	}
 	if err := c.broadcast(ctx, c.nodes, ask); err != nil {
-		return fmt.Errorf("broadcast: %w", err)
+		return fmt.Errorf("%s: broadcast: %w", msg, err)
 	}
-	if err := c.commitAll(ctx, c.nodes, com); err != nil {
-		return fmt.Errorf("commit: %w", err)
+	if err := c.commitAll(context.Background(), c.nodes, com); err != nil {
+		return fmt.Errorf("%s commit: %w", msg, err)
 	}
 	return nil
 }

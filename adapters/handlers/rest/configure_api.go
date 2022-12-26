@@ -47,6 +47,7 @@ import (
 	modimage "github.com/semi-technologies/weaviate/modules/img2vec-neural"
 	modclip "github.com/semi-technologies/weaviate/modules/multi2vec-clip"
 	modner "github.com/semi-technologies/weaviate/modules/ner-transformers"
+	modqnaopenai "github.com/semi-technologies/weaviate/modules/qna-openai"
 	modqna "github.com/semi-technologies/weaviate/modules/qna-transformers"
 	modcentroid "github.com/semi-technologies/weaviate/modules/ref2vec-centroid"
 	modsum "github.com/semi-technologies/weaviate/modules/sum-transformers"
@@ -165,7 +166,11 @@ func configureAPI(api *operations.WeaviateAPI) http.Handler {
 	repo := db.New(appState.Logger, db.Config{
 		ServerVersion:                    config.ServerVersion,
 		GitHash:                          config.GitHash,
-		FlushIdleAfter:                   appState.ServerConfig.Config.Persistence.FlushIdleMemtablesAfter,
+		MemtablesFlushIdleAfter:          appState.ServerConfig.Config.Persistence.FlushIdleMemtablesAfter,
+		MemtablesInitialSizeMB:           10,
+		MemtablesMaxSizeMB:               appState.ServerConfig.Config.Persistence.MemtablesMaxSizeMB,
+		MemtablesMinActiveSeconds:        appState.ServerConfig.Config.Persistence.MemtablesMinActiveDurationSeconds,
+		MemtablesMaxActiveSeconds:        appState.ServerConfig.Config.Persistence.MemtablesMaxActiveDurationSeconds,
 		RootPath:                         appState.ServerConfig.Config.Persistence.DataPath,
 		QueryLimit:                       appState.ServerConfig.Config.QueryDefaults.Limit,
 		QueryMaximumResults:              appState.ServerConfig.Config.QueryMaximumResults,
@@ -174,6 +179,7 @@ func configureAPI(api *operations.WeaviateAPI) http.Handler {
 		ReindexVectorDimensionsAtStartup: appState.ServerConfig.Config.ReindexVectorDimensionsAtStartup,
 		ResourceUsage:                    appState.ServerConfig.Config.ResourceUsage,
 	}, remoteIndexClient, appState.Cluster, remoteNodesClient, replicationClient, appState.Metrics) // TODO client
+	appState.DB = repo
 	vectorMigrator = db.NewMigrator(repo, appState.Logger)
 	vectorRepo = repo
 	migrator = vectorMigrator
@@ -499,6 +505,14 @@ func registerModules(appState *state.State) error {
 		appState.Logger.
 			WithField("action", "startup").
 			WithField("module", "text2vec-openai").
+			Debug("enabled module")
+	}
+
+	if _, ok := enabledModules["qna-openai"]; ok {
+		appState.Modules.Register(modqnaopenai.New())
+		appState.Logger.
+			WithField("action", "startup").
+			WithField("module", "qna-openai").
 			Debug("enabled module")
 	}
 

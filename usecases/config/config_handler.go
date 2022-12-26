@@ -46,6 +46,9 @@ const (
 	// These BM25 tuning params can be overwritten on a per-class basis
 	DefaultBM25k1 = float32(1.2)
 	DefaultBM25b  = float32(0.75)
+
+	// These hybrid tuning params can be overwritten on a per-class basis
+	DefaultAlpha = float64(0.75)
 )
 
 const (
@@ -167,8 +170,11 @@ type Profiling struct {
 }
 
 type Persistence struct {
-	DataPath                string `json:"dataPath" yaml:"dataPath"`
-	FlushIdleMemtablesAfter int    `json:"flushIdleMemtablesAfter" yaml:"flushIdleMemtablesAfter"`
+	DataPath                          string `json:"dataPath" yaml:"dataPath"`
+	FlushIdleMemtablesAfter           int    `json:"flushIdleMemtablesAfter" yaml:"flushIdleMemtablesAfter"`
+	MemtablesMaxSizeMB                int    `json:"memtablesMaxSizeMB" yaml:"memtablesMaxSizeMB"`
+	MemtablesMinActiveDurationSeconds int    `json:"memtablesMinActiveDurationSeconds" yaml:"memtablesMinActiveDurationSeconds"`
+	MemtablesMaxActiveDurationSeconds int    `json:"memtablesMaxActiveDurationSeconds" yaml:"memtablesMaxActiveDurationSeconds"`
 }
 
 func (p Persistence) Validate() error {

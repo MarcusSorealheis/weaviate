@@ -46,7 +46,7 @@ func (m *Manager) UpdateObjectReferences(
 	m.metrics.UpdateReferenceInc()
 	defer m.metrics.UpdateReferenceDec()
 
-	res, err := m.getObjectFromRepo(ctx, input.Class, input.ID, additional.Properties{})
+	res, err := m.getObjectFromRepo(ctx, input.Class, input.ID, additional.Properties{}, nil)
 	if err != nil {
 		errnf := ErrNotFound{}
 		if errors.As(err, &errnf) {
@@ -70,7 +70,7 @@ func (m *Manager) UpdateObjectReferences(
 	}
 	defer unlock()
 
-	validator := validation.New(schema.Schema{}, m.vectorRepo.Exists, m.config)
+	validator := validation.New(m.vectorRepo.Exists, m.config)
 	if err := input.validate(ctx, principal, validator, m.schemaManager); err != nil {
 		return &Error{"bad inputs", StatusBadRequest, err}
 	}

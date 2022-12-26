@@ -14,6 +14,7 @@ package db
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 
 	"github.com/pkg/errors"
 	"github.com/semi-technologies/weaviate/entities/schema"
@@ -26,16 +27,17 @@ import (
 )
 
 type DB struct {
-	logger        logrus.FieldLogger
-	schemaGetter  schemaUC.SchemaGetter
-	config        Config
-	indices       map[string]*Index
-	remoteIndex   sharding.RemoteIndexClient
-	replicaClient replica.Client
-	nodeResolver  nodeResolver
-	remoteNode    *sharding.RemoteNode
-	promMetrics   *monitoring.PrometheusMetrics
-	shutdown      chan struct{}
+	logger          logrus.FieldLogger
+	schemaGetter    schemaUC.SchemaGetter
+	config          Config
+	indices         map[string]*Index
+	remoteIndex     sharding.RemoteIndexClient
+	replicaClient   replica.Client
+	nodeResolver    nodeResolver
+	remoteNode      *sharding.RemoteNode
+	promMetrics     *monitoring.PrometheusMetrics
+	shutdown        chan struct{}
+	startupComplete atomic.Bool
 
 	// indexLock is an RWMutex which allows concurrent access to various indexes,
 	// but only one modifaction at a time. R/W can be a bit confusing here,
@@ -69,10 +71,13 @@ func (d *DB) WaitForStartup(ctx context.Context) error {
 		return err
 	}
 
+	d.startupComplete.Store(true)
 	d.scanResourceUsage()
 
 	return nil
 }
+
+func (d *DB) StartupComplete() bool { return d.startupComplete.Load() }
 
 func New(logger logrus.FieldLogger, config Config,
 	remoteIndex sharding.RemoteIndexClient, nodeResolver nodeResolver,
@@ -98,7 +103,11 @@ type Config struct {
 	QueryMaximumResults              int64
 	ResourceUsage                    config.ResourceUsage
 	MaxImportGoroutinesFactor        float64
-	FlushIdleAfter                   int
+	MemtablesFlushIdleAfter          int
+	MemtablesInitialSizeMB           int
+	MemtablesMaxSizeMB               int
+	MemtablesMinActiveSeconds        int
+	MemtablesMaxActiveSeconds        int
 	TrackVectorDimensions            bool
 	ReindexVectorDimensionsAtStartup bool
 	ServerVersion                    string
@@ -121,19 +130,6 @@ func (d *DB) GetIndex(className schema.ClassName) *Index {
 
 // GetIndexForIncoming returns the index if it exists or nil if it doesn't
 func (d *DB) GetIndexForIncoming(className schema.ClassName) sharding.RemoteIndexIncomingRepo {
-	d.indexLock.RLock()
-	defer d.indexLock.RUnlock()
-
-	id := indexID(className)
-	index, ok := d.indices[id]
-	if !ok {
-		return nil
-	}
-
-	return index
-}
-
-func (d *DB) GetReplicatedIndex(className schema.ClassName) Replicator {
 	d.indexLock.RLock()
 	defer d.indexLock.RUnlock()
 
