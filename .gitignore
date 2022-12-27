@@ -105,3 +105,9 @@ benchmark_results_*.json
 
 # local credentials
 creds.json
+
+# ignore gazelle generated symlinks
+bazel-bin/
+bazel-out/
+bazel-testlogs/
+bazel-weaviate/
