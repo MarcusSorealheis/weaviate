@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "anonymous",
+    srcs = ["middleware.go"],
+    importpath = "github.com/marcussorealheis/weaviate/usecases/auth/authentication/anonymous",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_go_openapi_runtime//:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/config:go_default_library",
+    ],
+)
+
+go_test(
+    name = "anonymous_test",
+    srcs = ["middleware_test.go"],
+    embed = [":anonymous"],
+    deps = [
+        "@com_github_semi_technologies_weaviate//usecases/config:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+    ],
+)

@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "backup",
+    srcs = [
+        "descriptor.go",
+        "errors.go",
+        "status.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/entities/backup",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "backup_test",
+    srcs = ["descriptor_test.go"],
+    embed = [":backup"],
+    deps = ["@com_github_stretchr_testify//assert:go_default_library"],
+)

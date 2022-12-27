@@ -1,0 +1,39 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "replication",
+    srcs = ["crud_ops.go"],
+    importpath = "github.com/marcussorealheis/weaviate/test/acceptance/replication",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_semi_technologies_weaviate//client/objects:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/filters:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//test/helper:go_default_library",
+        "@com_github_semi_technologies_weaviate//test/helper/graphql:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+    ],
+)
+
+go_test(
+    name = "replication_test",
+    srcs = [
+        "crud_test.go",
+        "setup_test.go",
+    ],
+    embed = [":replication"],
+    deps = [
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_semi_technologies_weaviate//client/objects:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema/crossref:go_default_library",
+        "@com_github_semi_technologies_weaviate//test/docker:go_default_library",
+        "@com_github_semi_technologies_weaviate//test/helper:go_default_library",
+        "@com_github_semi_technologies_weaviate//test/helper/sample-schema/articles:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+        "@org_golang_x_net//context:go_default_library",
+    ],
+)

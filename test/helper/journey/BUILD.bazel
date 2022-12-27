@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "journey",
+    srcs = [
+        "backup_and_restore_journey.go",
+        "backup_journey.go",
+        "backup_journey_tests.go",
+        "cluster_backup_journey.go",
+        "single_node_backup_journey.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/test/helper/journey",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_semi_technologies_weaviate//client/backups:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/backup:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//test/helper:go_default_library",
+        "@com_github_semi_technologies_weaviate//test/helper/modules:go_default_library",
+        "@com_github_semi_technologies_weaviate//test/helper/sample-schema/books:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+    ],
+)

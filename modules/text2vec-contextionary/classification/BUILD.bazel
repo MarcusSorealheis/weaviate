@@ -1,0 +1,57 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "classification",
+    srcs = [
+        "classifier.go",
+        "classifier_misc.go",
+        "classifier_params.go",
+        "classifier_prepare_contextual.go",
+        "classifier_run_contextual.go",
+        "splitter.go",
+        "tf_idf.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/modules/text2vec-contextionary/classification",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_pkg_errors//:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/additional:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/filters:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/modulecapabilities:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema/crossref:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/search:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/classification:go_default_library",
+    ],
+)
+
+go_test(
+    name = "classification_test",
+    srcs = [
+        "classifier_test.go",
+        "fakes_for_test.go",
+        "schema_for_test.go",
+        "tf_idf_test.go",
+    ],
+    embed = [":classification"],
+    deps = [
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_pkg_errors//:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/filters:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/modulecapabilities:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema/crossref:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/search:go_default_library",
+        "@com_github_semi_technologies_weaviate//test/helper:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/classification:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/objects:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/sharding:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/traverser:go_default_library",
+        "@com_github_sirupsen_logrus//hooks/test:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+    ],
+)

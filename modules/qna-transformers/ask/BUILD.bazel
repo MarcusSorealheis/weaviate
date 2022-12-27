@@ -1,0 +1,38 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "ask",
+    srcs = [
+        "graphql_argument.go",
+        "graphql_provider.go",
+        "grapqhl_extract.go",
+        "param.go",
+        "param_helper.go",
+        "searcher.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/modules/qna-transformers/ask",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_pkg_errors//:go_default_library",
+        "@com_github_semi_technologies_weaviate//adapters/handlers/graphql/descriptions:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/modulecapabilities:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/moduletools:go_default_library",
+        "@com_github_tailor_inc_graphql//:go_default_library",
+    ],
+)
+
+go_test(
+    name = "ask_test",
+    srcs = [
+        "fakes_for_test.go",
+        "graphql_argument_test.go",
+        "grapqhl_extract_test.go",
+        "param_helper_test.go",
+        "param_test.go",
+    ],
+    embed = [":ask"],
+    deps = [
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_tailor_inc_graphql//:go_default_library",
+    ],
+)

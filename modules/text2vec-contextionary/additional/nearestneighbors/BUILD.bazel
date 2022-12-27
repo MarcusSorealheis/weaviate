@@ -1,0 +1,30 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "nearestneighbors",
+    srcs = ["extender.go"],
+    importpath = "github.com/marcussorealheis/weaviate/modules/text2vec-contextionary/additional/nearestneighbors",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_pkg_errors//:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/moduletools:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/search:go_default_library",
+        "@com_github_semi_technologies_weaviate//modules/text2vec-contextionary/additional/models:go_default_library",
+        "@com_github_tailor_inc_graphql//language/ast:go_default_library",
+    ],
+)
+
+go_test(
+    name = "nearestneighbors_test",
+    srcs = ["extender_test.go"],
+    embed = [":nearestneighbors"],
+    deps = [
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/additional:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/search:go_default_library",
+        "@com_github_semi_technologies_weaviate//modules/text2vec-contextionary/additional/models:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+    ],
+)

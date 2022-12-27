@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "asm",
+    srcs = [
+        "doc.go",
+        "dot_amd64.s",
+        "dot_stub_amd64.go",
+        "l2_amd64.s",
+        "l2_stub_amd64.go",
+        "prefetch_amd64.s",
+        "prefetch_stub_amd64.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/adapters/repos/db/vector/hnsw/distancer/asm",
+    visibility = ["//visibility:public"],
+)

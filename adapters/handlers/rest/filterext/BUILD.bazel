@@ -1,0 +1,28 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "filterext",
+    srcs = [
+        "parse.go",
+        "parse_value.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/adapters/handlers/rest/filterext",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_semi_technologies_weaviate//entities/filters:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema:go_default_library",
+    ],
+)
+
+go_test(
+    name = "filterext_test",
+    srcs = ["parse_test.go"],
+    embed = [":filterext"],
+    deps = [
+        "@com_github_semi_technologies_weaviate//entities/filters:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+    ],
+)

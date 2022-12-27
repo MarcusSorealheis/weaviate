@@ -1,0 +1,26 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "additional",
+    srcs = [
+        "arguments.go",
+        "provider.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/modules/text2vec-openai/additional",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_semi_technologies_weaviate//entities/modulecapabilities:go_default_library",
+        "@com_github_semi_technologies_weaviate//modules/text2vec-openai/additional/projector:go_default_library",
+        "@com_github_tailor_inc_graphql//:go_default_library",
+    ],
+)
+
+go_test(
+    name = "additional_test",
+    srcs = ["arguments_test.go"],
+    embed = [":additional"],
+    deps = [
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_tailor_inc_graphql//:go_default_library",
+    ],
+)

@@ -1,0 +1,30 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "modulecapabilities",
+    srcs = [
+        "additional.go",
+        "backup.go",
+        "classification.go",
+        "client.go",
+        "config.go",
+        "graphql.go",
+        "module.go",
+        "searcher.go",
+        "texttransformer.go",
+        "vectorizer.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/entities/modulecapabilities",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/additional:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/filters:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/moduletools:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/search:go_default_library",
+        "@com_github_tailor_inc_graphql//:go_default_library",
+        "@com_github_tailor_inc_graphql//language/ast:go_default_library",
+    ],
+)

@@ -1,0 +1,31 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "client",
+    srcs = [
+        "contextionary.go",
+        "meta_provider.go",
+        "version_checks.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/modules/text2vec-contextionary/client",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_pkg_errors//:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//modules/text2vec-contextionary/additional/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//modules/text2vec-contextionary/vectorizer:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/traverser:go_default_library",
+        "@com_github_sirupsen_logrus//:go_default_library",
+        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//codes:go_default_library",
+        "@org_golang_google_grpc//credentials/insecure:go_default_library",
+        "@org_golang_google_grpc//status:go_default_library",
+    ],
+)
+
+go_test(
+    name = "client_test",
+    srcs = ["version_checks_test.go"],
+    embed = [":client"],
+    deps = ["@com_github_stretchr_testify//assert:go_default_library"],
+)

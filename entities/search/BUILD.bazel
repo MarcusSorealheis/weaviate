@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "search",
+    srcs = [
+        "ref.go",
+        "result.go",
+        "select_property.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/entities/search",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/additional:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema:go_default_library",
+    ],
+)

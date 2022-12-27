@@ -1,0 +1,30 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "batch",
+    srcs = [
+        "batch_objects_create.go",
+        "batch_objects_create_parameters.go",
+        "batch_objects_create_responses.go",
+        "batch_objects_create_urlbuilder.go",
+        "batch_objects_delete.go",
+        "batch_objects_delete_parameters.go",
+        "batch_objects_delete_responses.go",
+        "batch_objects_delete_urlbuilder.go",
+        "batch_references_create.go",
+        "batch_references_create_parameters.go",
+        "batch_references_create_responses.go",
+        "batch_references_create_urlbuilder.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/adapters/handlers/rest/operations/batch",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_go_openapi_errors//:go_default_library",
+        "@com_github_go_openapi_runtime//:go_default_library",
+        "@com_github_go_openapi_runtime//middleware:go_default_library",
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_go_openapi_swag//:go_default_library",
+        "@com_github_go_openapi_validate//:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+    ],
+)

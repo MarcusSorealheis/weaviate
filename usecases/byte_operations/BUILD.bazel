@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "byte_operations",
+    srcs = ["byte_operations.go"],
+    importpath = "github.com/marcussorealheis/weaviate/usecases/byte_operations",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "byte_operations_test",
+    srcs = ["byte_operations_test.go"],
+    embed = [":byte_operations"],
+    deps = [
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+    ],
+)

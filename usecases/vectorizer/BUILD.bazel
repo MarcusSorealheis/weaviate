@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "vectorizer",
+    srcs = [
+        "combine.go",
+        "distance.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/usecases/vectorizer",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "vectorizer_test",
+    srcs = ["combine_test.go"],
+    embed = [":vectorizer"],
+)

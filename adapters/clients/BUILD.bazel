@@ -1,0 +1,57 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "clients",
+    srcs = [
+        "client.go",
+        "cluster_backups.go",
+        "cluster_classifications.go",
+        "cluster_node.go",
+        "cluster_schema.go",
+        "remote_index.go",
+        "replication.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/adapters/clients",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_pkg_errors//:go_default_library",
+        "@com_github_semi_technologies_weaviate//adapters/handlers/rest/clusterapi:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/additional:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/aggregation:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/errors:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/filters:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/search:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/searchparams:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/storobj:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/backup:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/cluster:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/objects:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/replica:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/sharding:go_default_library",
+    ],
+)
+
+go_test(
+    name = "clients_test",
+    srcs = [
+        "cluster_schema_test.go",
+        "remote_index_test.go",
+        "replication_test.go",
+    ],
+    embed = [":clients"],
+    deps = [
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_semi_technologies_weaviate//adapters/handlers/rest/clusterapi:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/additional:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/search:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/storobj:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/cluster:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/objects:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/replica:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+    ],
+)

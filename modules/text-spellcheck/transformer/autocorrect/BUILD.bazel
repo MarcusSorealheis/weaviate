@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "autocorrect",
+    srcs = ["autocorrect.go"],
+    importpath = "github.com/marcussorealheis/weaviate/modules/text-spellcheck/transformer/autocorrect",
+    visibility = ["//visibility:public"],
+    deps = ["@com_github_semi_technologies_weaviate//modules/text-spellcheck/ent:go_default_library"],
+)

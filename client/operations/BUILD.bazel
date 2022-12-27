@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "operations",
+    srcs = [
+        "operations_client.go",
+        "weaviate_root_parameters.go",
+        "weaviate_root_responses.go",
+        "weaviate_wellknown_liveness_parameters.go",
+        "weaviate_wellknown_liveness_responses.go",
+        "weaviate_wellknown_readiness_parameters.go",
+        "weaviate_wellknown_readiness_responses.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/client/operations",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_go_openapi_errors//:go_default_library",
+        "@com_github_go_openapi_runtime//:go_default_library",
+        "@com_github_go_openapi_runtime//client:go_default_library",
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_go_openapi_swag//:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+    ],
+)

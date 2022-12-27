@@ -1,0 +1,26 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_test")
+
+go_test(
+    name = "batch_request_endpoints_test",
+    srcs = [
+        "actionscreate_test.go",
+        "batch_delete_test.go",
+        "batch_journey_test.go",
+        "graphql_helper_for_test.go",
+        "graphql_test.go",
+        "setup_test.go",
+        "thingscreate_test.go",
+    ],
+    deps = [
+        "@com_github_go_openapi_runtime//:go_default_library",
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_google_uuid//:go_default_library",
+        "@com_github_semi_technologies_weaviate//client/batch:go_default_library",
+        "@com_github_semi_technologies_weaviate//client/graphql:go_default_library",
+        "@com_github_semi_technologies_weaviate//client/schema:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//test/helper:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+    ],
+)

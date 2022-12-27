@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "graphql",
+    srcs = [
+        "graphql_batch.go",
+        "graphql_batch_parameters.go",
+        "graphql_batch_responses.go",
+        "graphql_batch_urlbuilder.go",
+        "graphql_post.go",
+        "graphql_post_parameters.go",
+        "graphql_post_responses.go",
+        "graphql_post_urlbuilder.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/adapters/handlers/rest/operations/graphql",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_go_openapi_errors//:go_default_library",
+        "@com_github_go_openapi_runtime//:go_default_library",
+        "@com_github_go_openapi_runtime//middleware:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+    ],
+)

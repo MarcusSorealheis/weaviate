@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "benchmark_lib",
+    srcs = [
+        "benchmark.go",
+        "benchmark_sift.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/test/benchmark",
+    visibility = ["//visibility:private"],
+    deps = [
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_google_uuid//:go_default_library",
+        "@com_github_pkg_errors//:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "benchmark",
+    embed = [":benchmark_lib"],
+    visibility = ["//visibility:public"],
+)

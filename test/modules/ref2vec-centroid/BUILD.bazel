@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_test")
+
+go_test(
+    name = "ref2vec-centroid_test",
+    srcs = [
+        "centroid_test.go",
+        "setup_test.go",
+    ],
+    deps = [
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_pkg_errors//:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema/crossref:go_default_library",
+        "@com_github_semi_technologies_weaviate//test/docker:go_default_library",
+        "@com_github_semi_technologies_weaviate//test/helper:go_default_library",
+        "@com_github_semi_technologies_weaviate//test/helper/sample-schema/articles:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+    ],
+)

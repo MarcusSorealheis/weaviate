@@ -1,0 +1,37 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "tokens",
+    srcs = [
+        "tokens.go",
+        "tokens_graphql_field.go",
+        "tokens_params.go",
+        "tokens_params_extractor.go",
+        "tokens_result.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/modules/ner-transformers/additional/tokens",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_semi_technologies_weaviate//adapters/handlers/graphql/descriptions:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/moduletools:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/search:go_default_library",
+        "@com_github_semi_technologies_weaviate//modules/ner-transformers/ent:go_default_library",
+        "@com_github_tailor_inc_graphql//:go_default_library",
+        "@com_github_tailor_inc_graphql//language/ast:go_default_library",
+    ],
+)
+
+go_test(
+    name = "tokens_test",
+    srcs = [
+        "tokens_graphql_field_test.go",
+        "tokens_params_extractor_test.go",
+    ],
+    embed = [":tokens"],
+    deps = [
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_tailor_inc_graphql//:go_default_library",
+        "@com_github_tailor_inc_graphql//language/ast:go_default_library",
+    ],
+)

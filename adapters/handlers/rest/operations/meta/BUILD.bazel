@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "meta",
+    srcs = [
+        "meta_get.go",
+        "meta_get_parameters.go",
+        "meta_get_responses.go",
+        "meta_get_urlbuilder.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/adapters/handlers/rest/operations/meta",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_go_openapi_errors//:go_default_library",
+        "@com_github_go_openapi_runtime//:go_default_library",
+        "@com_github_go_openapi_runtime//middleware:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+    ],
+)

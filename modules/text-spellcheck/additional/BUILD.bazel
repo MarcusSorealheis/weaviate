@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "additional",
+    srcs = ["provider.go"],
+    importpath = "github.com/marcussorealheis/weaviate/modules/text-spellcheck/additional",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_semi_technologies_weaviate//entities/modulecapabilities:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/moduletools:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/search:go_default_library",
+        "@com_github_tailor_inc_graphql//:go_default_library",
+        "@com_github_tailor_inc_graphql//language/ast:go_default_library",
+    ],
+)

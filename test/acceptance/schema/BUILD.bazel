@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "schema",
+    srcs = ["helper.go"],
+    importpath = "github.com/marcussorealheis/weaviate/test/acceptance/schema",
+    visibility = ["//visibility:public"],
+    deps = ["@com_github_semi_technologies_weaviate//test/helper:go_default_library"],
+)
+
+go_test(
+    name = "schema_test",
+    srcs = [
+        "add_class_test.go",
+        "get_schema_without_client_test.go",
+    ],
+    embed = [":schema"],
+    deps = [
+        "@com_github_semi_technologies_weaviate//client/schema:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//test/helper:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+    ],
+)

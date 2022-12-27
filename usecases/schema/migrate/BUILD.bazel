@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "migrate",
+    srcs = ["migrator.go"],
+    importpath = "github.com/marcussorealheis/weaviate/usecases/schema/migrate",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/sharding:go_default_library",
+    ],
+)

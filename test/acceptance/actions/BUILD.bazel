@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_test")
+
+go_test(
+    name = "actions_test",
+    srcs = [
+        "add_test.go",
+        "delete_test.go",
+        "individual_refs_test.go",
+        "network_refs_test.go",
+        "object_test.go",
+        "setup_test.go",
+        "update_test.go",
+    ],
+    deps = [
+        "@com_github_davecgh_go_spew//spew:go_default_library",
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_semi_technologies_weaviate//client/batch:go_default_library",
+        "@com_github_semi_technologies_weaviate//client/objects:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema/crossref:go_default_library",
+        "@com_github_semi_technologies_weaviate//test/helper:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+    ],
+)

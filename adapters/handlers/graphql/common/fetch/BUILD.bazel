@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "fetch",
+    srcs = ["filter.go"],
+    importpath = "github.com/marcussorealheis/weaviate/adapters/handlers/graphql/common/fetch",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_semi_technologies_weaviate//adapters/handlers/graphql/descriptions:go_default_library",
+        "@com_github_semi_technologies_weaviate//adapters/handlers/graphql/local/common_filters:go_default_library",
+        "@com_github_tailor_inc_graphql//:go_default_library",
+    ],
+)

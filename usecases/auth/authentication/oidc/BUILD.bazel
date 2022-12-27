@@ -1,0 +1,31 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "oidc",
+    srcs = ["middleware.go"],
+    importpath = "github.com/marcussorealheis/weaviate/usecases/auth/authentication/oidc",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_coreos_go_oidc_v3//oidc:go_default_library",
+        "@com_github_go_openapi_errors//:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/config:go_default_library",
+    ],
+)
+
+go_test(
+    name = "oidc_test",
+    srcs = [
+        "middleware_test.go",
+        "oidc_server_for_test.go",
+    ],
+    embed = [":oidc"],
+    deps = [
+        "@com_github_go_openapi_errors//:go_default_library",
+        "@com_github_golang_jwt_jwt_v4//:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/config:go_default_library",
+        "@com_github_square_go_jose//:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+    ],
+)

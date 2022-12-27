@@ -107,7 +107,7 @@ benchmark_results_*.json
 creds.json
 
 # ignore gazelle generated symlinks
-bazel-bin/
-bazel-out/
-bazel-testlogs/
-bazel-weaviate/
+bazel-bin*
+bazel-out*
+bazel-testlogs*
+bazel-weaviate*

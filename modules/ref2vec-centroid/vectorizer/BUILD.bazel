@@ -1,0 +1,41 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "vectorizer",
+    srcs = [
+        "method_mean.go",
+        "vectorizer.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/modules/ref2vec-centroid/vectorizer",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/additional:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/modulecapabilities:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/moduletools:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema/crossref:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/search:go_default_library",
+        "@com_github_semi_technologies_weaviate//modules/ref2vec-centroid/config:go_default_library",
+    ],
+)
+
+go_test(
+    name = "vectorizer_test",
+    srcs = [
+        "fakes_for_test.go",
+        "vectorizer_test.go",
+    ],
+    embed = [":vectorizer"],
+    deps = [
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_google_uuid//:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/additional:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema/crossref:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/search:go_default_library",
+        "@com_github_semi_technologies_weaviate//modules/ref2vec-centroid/config:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//mock:go_default_library",
+    ],
+)

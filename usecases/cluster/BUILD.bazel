@@ -1,0 +1,37 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "cluster",
+    srcs = [
+        "iterator.go",
+        "log_workaround.go",
+        "state.go",
+        "transactions_broadcast.go",
+        "transactions_read.go",
+        "transactions_write.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/usecases/cluster",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_google_uuid//:go_default_library",
+        "@com_github_hashicorp_memberlist//:go_default_library",
+        "@com_github_pkg_errors//:go_default_library",
+        "@com_github_sirupsen_logrus//:go_default_library",
+        "@org_golang_x_sync//errgroup:go_default_library",
+    ],
+)
+
+go_test(
+    name = "cluster_test",
+    srcs = [
+        "iterator_test.go",
+        "transactions_broadcast_test.go",
+        "transactions_test.go",
+    ],
+    embed = [":cluster"],
+    deps = [
+        "@com_github_sirupsen_logrus//hooks/test:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+    ],
+)

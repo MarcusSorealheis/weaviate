@@ -1,0 +1,11 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "errors",
+    srcs = [
+        "errors_http.go",
+        "errors_remote_client.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/entities/errors",
+    visibility = ["//visibility:public"],
+)

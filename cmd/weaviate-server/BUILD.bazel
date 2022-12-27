@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "weaviate-server_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/marcussorealheis/weaviate/cmd/weaviate-server",
+    visibility = ["//visibility:private"],
+    deps = [
+        "@com_github_go_openapi_loads//:go_default_library",
+        "@com_github_jessevdk_go_flags//:go_default_library",
+        "@com_github_semi_technologies_weaviate//adapters/handlers/rest:go_default_library",
+        "@com_github_semi_technologies_weaviate//adapters/handlers/rest/operations:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "weaviate-server",
+    embed = [":weaviate-server_lib"],
+    visibility = ["//visibility:public"],
+)

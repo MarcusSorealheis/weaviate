@@ -1,0 +1,62 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "graphql_resolvers",
+    srcs = [
+        "aggregate_response_assert.go",
+        "json_helper.go",
+        "local_aggregate_with_expected_failures.go",
+        "local_get_with_expected_failures.go",
+        "objects_helper.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/test/acceptance/graphql_resolvers",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema:go_default_library",
+        "@com_github_semi_technologies_weaviate//test/helper:go_default_library",
+        "@com_github_semi_technologies_weaviate//test/helper/graphql:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+    ],
+)
+
+go_test(
+    name = "graphql_resolvers_test",
+    srcs = [
+        "local_aggregate_matrix_groupby_test.go",
+        "local_aggregate_matrix_no_groupby_test.go",
+        "local_aggregate_matrix_setup_test.go",
+        "local_aggregate_test.go",
+        "local_get_shadow_test.go",
+        "local_get_test.go",
+        "local_get_with_additional_test.go",
+        "local_get_with_custom_vectors_test.go",
+        "local_get_with_filter_test.go",
+        "local_get_with_geo_range_filter_test.go",
+        "local_get_with_grouping_test.go",
+        "local_get_with_sort_test.go",
+        "local_get_with_unlimited_vector_search_test.go",
+        "multi_reftype_bug_test.go",
+        "network_aggregate_test.go",
+        "network_fetch_test.go",
+        "network_get_meta_test.go",
+        "network_get_test.go",
+        "setup_test.go",
+        "unindexed_property_test.go",
+    ],
+    embed = [":graphql_resolvers"],
+    deps = [
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_semi_technologies_weaviate//client/objects:go_default_library",
+        "@com_github_semi_technologies_weaviate//client/schema:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema/crossref:go_default_library",
+        "@com_github_semi_technologies_weaviate//test/helper:go_default_library",
+        "@com_github_semi_technologies_weaviate//test/helper/graphql:go_default_library",
+        "@com_github_semi_technologies_weaviate//test/helper/sample-schema/multishard:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+    ],
+)

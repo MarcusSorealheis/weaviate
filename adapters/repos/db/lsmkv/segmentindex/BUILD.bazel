@@ -1,0 +1,28 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "segmentindex",
+    srcs = [
+        "disk_tree.go",
+        "tree.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/adapters/repos/db/lsmkv/segmentindex",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_pkg_errors//:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/byte_operations:go_default_library",
+    ],
+)
+
+go_test(
+    name = "segmentindex_test",
+    srcs = [
+        "balanced_test.go",
+        "tree_test.go",
+    ],
+    embed = [":segmentindex"],
+    deps = [
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+    ],
+)

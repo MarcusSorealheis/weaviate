@@ -1,0 +1,39 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "vectorizer",
+    srcs = [
+        "class_settings.go",
+        "objects.go",
+        "texts.go",
+        "todo_move_out_of_here_movements.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/modules/text2vec-transformers/vectorizer",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_fatih_camelcase//:go_default_library",
+        "@com_github_pkg_errors//:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/moduletools:go_default_library",
+        "@com_github_semi_technologies_weaviate//modules/text2vec-transformers/ent:go_default_library",
+    ],
+)
+
+go_test(
+    name = "vectorizer_test",
+    srcs = [
+        "class_settings_test.go",
+        "fakes_for_test.go",
+        "objects_test.go",
+        "texts_test.go",
+    ],
+    embed = [":vectorizer"],
+    deps = [
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/moduletools:go_default_library",
+        "@com_github_semi_technologies_weaviate//modules/text2vec-transformers/ent:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/modules:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+    ],
+)

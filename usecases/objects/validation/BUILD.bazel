@@ -1,0 +1,38 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "validation",
+    srcs = [
+        "model_validation.go",
+        "phone_numbers.go",
+        "properties_validation.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/usecases/objects/validation",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_nyaruka_phonenumbers//:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema/crossref:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/config:go_default_library",
+    ],
+)
+
+go_test(
+    name = "validation_test",
+    srcs = [
+        "fakes_for_test.go",
+        "phone_numbers_test.go",
+        "properties_validation_test.go",
+    ],
+    embed = [":validation"],
+    deps = [
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/config:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+    ],
+)

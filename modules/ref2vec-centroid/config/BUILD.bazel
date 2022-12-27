@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "config",
+    srcs = [
+        "config.go",
+        "validation.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/modules/ref2vec-centroid/config",
+    visibility = ["//visibility:public"],
+    deps = ["@com_github_semi_technologies_weaviate//entities/moduletools:go_default_library"],
+)

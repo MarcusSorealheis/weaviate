@@ -1,0 +1,11 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "ent",
+    srcs = [
+        "vectorization_config.go",
+        "vectorization_result.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/modules/text2vec-openai/ent",
+    visibility = ["//visibility:public"],
+)

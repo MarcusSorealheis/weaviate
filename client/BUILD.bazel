@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "client",
+    srcs = ["weaviate_client.go"],
+    importpath = "github.com/marcussorealheis/weaviate/client",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_go_openapi_runtime//:go_default_library",
+        "@com_github_go_openapi_runtime//client:go_default_library",
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_semi_technologies_weaviate//client/backups:go_default_library",
+        "@com_github_semi_technologies_weaviate//client/batch:go_default_library",
+        "@com_github_semi_technologies_weaviate//client/classifications:go_default_library",
+        "@com_github_semi_technologies_weaviate//client/graphql:go_default_library",
+        "@com_github_semi_technologies_weaviate//client/meta:go_default_library",
+        "@com_github_semi_technologies_weaviate//client/nodes:go_default_library",
+        "@com_github_semi_technologies_weaviate//client/objects:go_default_library",
+        "@com_github_semi_technologies_weaviate//client/operations:go_default_library",
+        "@com_github_semi_technologies_weaviate//client/schema:go_default_library",
+        "@com_github_semi_technologies_weaviate//client/well_known:go_default_library",
+    ],
+)

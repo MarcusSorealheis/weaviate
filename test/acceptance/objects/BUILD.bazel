@@ -1,0 +1,49 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "objects",
+    srcs = [
+        "custom_vectors.go",
+        "delete_objects_from_all_classes.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/test/acceptance/objects",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_davecgh_go_spew//spew:go_default_library",
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_semi_technologies_weaviate//client/batch:go_default_library",
+        "@com_github_semi_technologies_weaviate//client/objects:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//test/helper:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+    ],
+)
+
+go_test(
+    name = "objects_test",
+    srcs = [
+        "additional_props_test.go",
+        "auto_schema_test.go",
+        "crefs_test.go",
+        "crefs_without_waiting_for_refresh_test.go",
+        "head_test.go",
+        "helpers_for_test.go",
+        "list_test.go",
+        "network_refs_test.go",
+        "objects_test.go",
+        "rapid_updates_add_reference_test.go",
+        "setup_test.go",
+        "skip_vector_index_test.go",
+    ],
+    embed = [":objects"],
+    deps = [
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_semi_technologies_weaviate//client/objects:go_default_library",
+        "@com_github_semi_technologies_weaviate//client/schema:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//test/helper:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+    ],
+)

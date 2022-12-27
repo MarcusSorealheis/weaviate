@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "descriptions",
+    srcs = [
+        "aggregate.go",
+        "explore.go",
+        "fetch.go",
+        "filters.go",
+        "get.go",
+        "getMeta.go",
+        "introspect.go",
+        "merge.go",
+        "rootQuery.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/adapters/handlers/graphql/descriptions",
+    visibility = ["//visibility:public"],
+)

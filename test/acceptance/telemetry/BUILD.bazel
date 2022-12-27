@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_test")
+
+go_test(
+    name = "telemetry_test",
+    srcs = [
+        "logging_test.go",
+        "setup_test.go",
+    ],
+)

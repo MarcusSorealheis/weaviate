@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "helpers",
+    srcs = [
+        "allow_list.go",
+        "helpers.go",
+        "tokenizer.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/adapters/repos/db/helpers",
+    visibility = ["//visibility:public"],
+)

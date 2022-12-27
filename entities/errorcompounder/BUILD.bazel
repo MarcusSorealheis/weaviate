@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "errorcompounder",
+    srcs = [
+        "compounder.go",
+        "compounder_thread_safe.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/entities/errorcompounder",
+    visibility = ["//visibility:public"],
+    deps = ["@com_github_pkg_errors//:go_default_library"],
+)

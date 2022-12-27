@@ -1,0 +1,39 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "answer",
+    srcs = [
+        "answer.go",
+        "answer_graphql_field.go",
+        "answer_result.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/modules/qna-transformers/additional/answer",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/moduletools:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/search:go_default_library",
+        "@com_github_semi_technologies_weaviate//modules/qna-transformers/additional/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//modules/qna-transformers/ent:go_default_library",
+        "@com_github_tailor_inc_graphql//:go_default_library",
+        "@com_github_tailor_inc_graphql//language/ast:go_default_library",
+    ],
+)
+
+go_test(
+    name = "answer_test",
+    srcs = [
+        "answer_graphql_field_test.go",
+        "answer_test.go",
+    ],
+    embed = [":answer"],
+    deps = [
+        "@com_github_semi_technologies_weaviate//entities/additional:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/search:go_default_library",
+        "@com_github_semi_technologies_weaviate//modules/qna-transformers/additional/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//modules/qna-transformers/ent:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+        "@com_github_tailor_inc_graphql//:go_default_library",
+    ],
+)

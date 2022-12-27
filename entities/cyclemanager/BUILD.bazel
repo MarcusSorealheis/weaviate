@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "cyclemanager",
+    srcs = [
+        "cyclemanager.go",
+        "interval.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/entities/cyclemanager",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "cyclemanager_test",
+    srcs = ["cyclemanager_test.go"],
+    embed = [":cyclemanager"],
+    deps = ["@com_github_stretchr_testify//assert:go_default_library"],
+)

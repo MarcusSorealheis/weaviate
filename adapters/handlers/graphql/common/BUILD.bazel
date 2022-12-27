@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "common",
+    srcs = ["json_number.go"],
+    importpath = "github.com/marcussorealheis/weaviate/adapters/handlers/graphql/common",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_semi_technologies_weaviate//entities/aggregation:go_default_library",
+        "@com_github_tailor_inc_graphql//:go_default_library",
+    ],
+)
+
+go_test(
+    name = "common_test",
+    srcs = ["json_number_test.go"],
+    embed = [":common"],
+    deps = [
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_tailor_inc_graphql//:go_default_library",
+    ],
+)

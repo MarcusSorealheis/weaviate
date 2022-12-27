@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "schema",
+    srcs = [
+        "schema_client.go",
+        "schema_dump_parameters.go",
+        "schema_dump_responses.go",
+        "schema_objects_create_parameters.go",
+        "schema_objects_create_responses.go",
+        "schema_objects_delete_parameters.go",
+        "schema_objects_delete_responses.go",
+        "schema_objects_get_parameters.go",
+        "schema_objects_get_responses.go",
+        "schema_objects_properties_add_parameters.go",
+        "schema_objects_properties_add_responses.go",
+        "schema_objects_shards_get_parameters.go",
+        "schema_objects_shards_get_responses.go",
+        "schema_objects_shards_update_parameters.go",
+        "schema_objects_shards_update_responses.go",
+        "schema_objects_update_parameters.go",
+        "schema_objects_update_responses.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/client/schema",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_go_openapi_errors//:go_default_library",
+        "@com_github_go_openapi_runtime//:go_default_library",
+        "@com_github_go_openapi_runtime//client:go_default_library",
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+    ],
+)

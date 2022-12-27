@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "modules",
+    srcs = ["modules_helper.go"],
+    importpath = "github.com/marcussorealheis/weaviate/test/helper/modules",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_semi_technologies_weaviate//test/helper:go_default_library",
+        "@com_github_semi_technologies_weaviate//test/helper/graphql:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+        "@com_google_cloud_go_storage//:go_default_library",
+        "@org_golang_google_api//googleapi:go_default_library",
+        "@org_golang_google_api//option:go_default_library",
+    ],
+)

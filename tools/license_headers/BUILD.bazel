@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "license_headers_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/marcussorealheis/weaviate/tools/license_headers",
+    visibility = ["//visibility:private"],
+    deps = ["@com_github_bmatcuk_doublestar//:go_default_library"],
+)
+
+go_binary(
+    name = "license_headers",
+    embed = [":license_headers_lib"],
+    visibility = ["//visibility:public"],
+)

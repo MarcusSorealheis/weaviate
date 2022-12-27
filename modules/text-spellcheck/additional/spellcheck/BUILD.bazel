@@ -1,0 +1,35 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "spellcheck",
+    srcs = [
+        "param_helper.go",
+        "spellcheck.go",
+        "spellcheck_graphql_field.go",
+        "spellcheck_result.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/modules/text-spellcheck/additional/spellcheck",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/moduletools:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/search:go_default_library",
+        "@com_github_semi_technologies_weaviate//modules/text-spellcheck/additional/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//modules/text-spellcheck/ent:go_default_library",
+        "@com_github_tailor_inc_graphql//:go_default_library",
+        "@com_github_tailor_inc_graphql//language/ast:go_default_library",
+    ],
+)
+
+go_test(
+    name = "spellcheck_test",
+    srcs = [
+        "param_helper_test.go",
+        "spellcheck_graphql_field_test.go",
+    ],
+    embed = [":spellcheck"],
+    deps = [
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_tailor_inc_graphql//:go_default_library",
+    ],
+)

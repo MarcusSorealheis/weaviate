@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "release_template_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/marcussorealheis/weaviate/tools/release_template",
+    visibility = ["//visibility:private"],
+    deps = ["@com_github_pkg_errors//:go_default_library"],
+)
+
+go_binary(
+    name = "release_template",
+    embed = [":release_template_lib"],
+    visibility = ["//visibility:public"],
+)

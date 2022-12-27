@@ -1,0 +1,34 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "helper",
+    srcs = [
+        "assertions.go",
+        "backups.go",
+        "client.go",
+        "distance.go",
+        "eventually_equal.go",
+        "init.go",
+        "logger.go",
+        "objects.go",
+        "objects_assertions.go",
+        "operations_client.go",
+        "test_data.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/test/helper",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_go_openapi_runtime//:go_default_library",
+        "@com_github_go_openapi_runtime//client:go_default_library",
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_semi_technologies_weaviate//client:go_default_library",
+        "@com_github_semi_technologies_weaviate//client/backups:go_default_library",
+        "@com_github_semi_technologies_weaviate//client/batch:go_default_library",
+        "@com_github_semi_technologies_weaviate//client/objects:go_default_library",
+        "@com_github_semi_technologies_weaviate//client/operations:go_default_library",
+        "@com_github_semi_technologies_weaviate//client/schema:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/additional:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+    ],
+)

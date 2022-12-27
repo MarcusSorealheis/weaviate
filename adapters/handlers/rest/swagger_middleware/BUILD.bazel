@@ -1,0 +1,8 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "swagger_middleware",
+    srcs = ["swagger_middleware.go"],
+    importpath = "github.com/marcussorealheis/weaviate/adapters/handlers/rest/swagger_middleware",
+    visibility = ["//visibility:public"],
+)

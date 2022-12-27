@@ -1,0 +1,8 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "locks",
+    srcs = ["connector_schema_lock.go"],
+    importpath = "github.com/marcussorealheis/weaviate/usecases/locks",
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,46 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "sharding",
+    srcs = [
+        "config.go",
+        "config_update.go",
+        "remote_index.go",
+        "remote_index_incoming.go",
+        "remote_node.go",
+        "remote_node_incoming.go",
+        "state.go",
+        "state_serialization.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/usecases/sharding",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_pkg_errors//:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/additional:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/aggregation:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/filters:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/search:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/searchparams:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/storobj:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/cluster:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/objects:go_default_library",
+        "@com_github_spaolacci_murmur3//:go_default_library",
+    ],
+)
+
+go_test(
+    name = "sharding_test",
+    srcs = [
+        "config_test.go",
+        "config_update_test.go",
+        "state_test.go",
+    ],
+    embed = [":sharding"],
+    deps = [
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+    ],
+)

@@ -1,0 +1,8 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "rbtree",
+    srcs = ["rbtree.go"],
+    importpath = "github.com/marcussorealheis/weaviate/adapters/repos/db/lsmkv/rbtree",
+    visibility = ["//visibility:public"],
+)

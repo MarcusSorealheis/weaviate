@@ -1,0 +1,52 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "aggregator",
+    srcs = [
+        "aggregator.go",
+        "boolean.go",
+        "date.go",
+        "filtered.go",
+        "grouped.go",
+        "grouper.go",
+        "numerical.go",
+        "references.go",
+        "shard_combiner.go",
+        "text.go",
+        "unfiltered.go",
+        "unfiltered_type_specific.go",
+        "vector_search.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/adapters/repos/db/aggregator",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_pkg_errors//:go_default_library",
+        "@com_github_semi_technologies_weaviate//adapters/repos/db/docid:go_default_library",
+        "@com_github_semi_technologies_weaviate//adapters/repos/db/helpers:go_default_library",
+        "@com_github_semi_technologies_weaviate//adapters/repos/db/inverted:go_default_library",
+        "@com_github_semi_technologies_weaviate//adapters/repos/db/inverted/stopwords:go_default_library",
+        "@com_github_semi_technologies_weaviate//adapters/repos/db/lsmkv:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/additional:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/aggregation:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/storobj:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/schema:go_default_library",
+        "@io_etcd_go_bbolt//:go_default_library",
+    ],
+)
+
+go_test(
+    name = "aggregator_test",
+    srcs = [
+        "date_test.go",
+        "numerical_test.go",
+        "shard_combiner_test.go",
+        "text_test.go",
+    ],
+    embed = [":aggregator"],
+    deps = [
+        "@com_github_semi_technologies_weaviate//entities/aggregation:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+    ],
+)

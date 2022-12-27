@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "backups",
+    srcs = [
+        "backups_client.go",
+        "backups_create_parameters.go",
+        "backups_create_responses.go",
+        "backups_create_status_parameters.go",
+        "backups_create_status_responses.go",
+        "backups_restore_parameters.go",
+        "backups_restore_responses.go",
+        "backups_restore_status_parameters.go",
+        "backups_restore_status_responses.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/client/backups",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_go_openapi_errors//:go_default_library",
+        "@com_github_go_openapi_runtime//:go_default_library",
+        "@com_github_go_openapi_runtime//client:go_default_library",
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+    ],
+)

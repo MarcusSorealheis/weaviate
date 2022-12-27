@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_test")
+
+go_test(
+    name = "qna-transformers_test",
+    srcs = [
+        "qna_test.go",
+        "setup_test.go",
+    ],
+    deps = [
+        "@com_github_pkg_errors//:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//test/docker:go_default_library",
+        "@com_github_semi_technologies_weaviate//test/helper:go_default_library",
+        "@com_github_semi_technologies_weaviate//test/helper/graphql:go_default_library",
+        "@com_github_semi_technologies_weaviate//test/helper/sample-schema/books:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+    ],
+)

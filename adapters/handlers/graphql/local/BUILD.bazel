@@ -1,0 +1,37 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "local",
+    srcs = [
+        "local.go",
+        "resolver.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/adapters/handlers/graphql/local",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_semi_technologies_weaviate//adapters/handlers/graphql/local/aggregate:go_default_library",
+        "@com_github_semi_technologies_weaviate//adapters/handlers/graphql/local/explore:go_default_library",
+        "@com_github_semi_technologies_weaviate//adapters/handlers/graphql/local/get:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/config:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/modules:go_default_library",
+        "@com_github_sirupsen_logrus//:go_default_library",
+        "@com_github_tailor_inc_graphql//:go_default_library",
+    ],
+)
+
+go_test(
+    name = "local_test",
+    srcs = ["local_component_test.go"],
+    embed = [":local"],
+    deps = [
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/config:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/modules:go_default_library",
+        "@com_github_sirupsen_logrus//hooks/test:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+        "@com_github_tailor_inc_graphql//:go_default_library",
+    ],
+)

@@ -1,0 +1,39 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "neartext",
+    srcs = [
+        "graphql_argument.go",
+        "graphql_extract.go",
+        "graphql_provider.go",
+        "param.go",
+        "searcher.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/modules/text2vec-cohere/neartext",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_pkg_errors//:go_default_library",
+        "@com_github_semi_technologies_weaviate//adapters/handlers/graphql/descriptions:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/modulecapabilities:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/moduletools:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema/crossref:go_default_library",
+        "@com_github_semi_technologies_weaviate//modules/text2vec-cohere/vectorizer:go_default_library",
+        "@com_github_tailor_inc_graphql//:go_default_library",
+    ],
+)
+
+go_test(
+    name = "neartext_test",
+    srcs = [
+        "fakes_for_test.go",
+        "graphql_argument_test.go",
+        "graphql_extract_test.go",
+        "param_test.go",
+    ],
+    embed = [":neartext"],
+    deps = [
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_tailor_inc_graphql//:go_default_library",
+    ],
+)

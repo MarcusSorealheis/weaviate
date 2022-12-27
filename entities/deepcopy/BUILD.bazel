@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "deepcopy",
+    srcs = ["models_deepcopy.go"],
+    importpath = "github.com/marcussorealheis/weaviate/entities/deepcopy",
+    visibility = ["//visibility:public"],
+    deps = ["@com_github_semi_technologies_weaviate//entities/models:go_default_library"],
+)

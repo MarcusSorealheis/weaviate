@@ -1,0 +1,27 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "qna-openai",
+    srcs = [
+        "ask.go",
+        "config.go",
+        "module.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/modules/qna-openai",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_pkg_errors//:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/modulecapabilities:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/moduletools:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema:go_default_library",
+        "@com_github_semi_technologies_weaviate//modules/qna-openai/additional:go_default_library",
+        "@com_github_semi_technologies_weaviate//modules/qna-openai/additional/answer:go_default_library",
+        "@com_github_semi_technologies_weaviate//modules/qna-openai/ask:go_default_library",
+        "@com_github_semi_technologies_weaviate//modules/qna-openai/clients:go_default_library",
+        "@com_github_semi_technologies_weaviate//modules/qna-openai/config:go_default_library",
+        "@com_github_semi_technologies_weaviate//modules/qna-openai/dependency:go_default_library",
+        "@com_github_semi_technologies_weaviate//modules/qna-openai/ent:go_default_library",
+        "@com_github_sirupsen_logrus//:go_default_library",
+    ],
+)

@@ -1,0 +1,27 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "docker",
+    srcs = [
+        "compose.go",
+        "container.go",
+        "contextionary.go",
+        "docker.go",
+        "gcs.go",
+        "minio.go",
+        "qna.go",
+        "sum.go",
+        "transformers.go",
+        "weaviate.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/test/docker",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_docker_go_connections//nat:go_default_library",
+        "@com_github_pkg_errors//:go_default_library",
+        "@com_github_semi_technologies_weaviate//modules/backup-gcs:go_default_library",
+        "@com_github_semi_technologies_weaviate//modules/backup-s3:go_default_library",
+        "@com_github_testcontainers_testcontainers_go//:go_default_library",
+        "@com_github_testcontainers_testcontainers_go//wait:go_default_library",
+    ],
+)

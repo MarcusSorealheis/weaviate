@@ -1,0 +1,43 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "explore",
+    srcs = [
+        "concepts.go",
+        "concepts_resolver.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/adapters/handlers/graphql/local/explore",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_semi_technologies_weaviate//adapters/handlers/graphql/descriptions:go_default_library",
+        "@com_github_semi_technologies_weaviate//adapters/handlers/graphql/local/common_filters:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/search:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/traverser:go_default_library",
+        "@com_github_tailor_inc_graphql//:go_default_library",
+        "@com_github_tailor_inc_graphql//language/ast:go_default_library",
+    ],
+)
+
+go_test(
+    name = "explore_test",
+    srcs = [
+        "concepts_test.go",
+        "helpers_for_test.go",
+    ],
+    embed = [":explore"],
+    deps = [
+        "@com_github_semi_technologies_weaviate//adapters/handlers/graphql/descriptions:go_default_library",
+        "@com_github_semi_technologies_weaviate//adapters/handlers/graphql/test/helper:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/modulecapabilities:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/moduletools:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/search:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/searchparams:go_default_library",
+        "@com_github_semi_technologies_weaviate//test/helper:go_default_library",
+        "@com_github_semi_technologies_weaviate//usecases/traverser:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+        "@com_github_tailor_inc_graphql//:go_default_library",
+    ],
+)

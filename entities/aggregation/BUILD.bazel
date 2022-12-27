@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "aggregation",
+    srcs = [
+        "params.go",
+        "result.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/entities/aggregation",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_semi_technologies_weaviate//entities/filters:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/searchparams:go_default_library",
+    ],
+)

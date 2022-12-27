@@ -1,0 +1,53 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "distancer",
+    srcs = [
+        "cosine_dist.go",
+        "dot_product.go",
+        "dot_product_amd64.go",
+        "geo_spatial.go",
+        "hamming.go",
+        "l2.go",
+        "l2_amd64.go",
+        "manhattan.go",
+        "normalize.go",
+        "provider.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/adapters/repos/db/vector/hnsw/distancer",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_pkg_errors//:go_default_library",
+    ] + select({
+        "@io_bazel_rules_go//go/platform:amd64": [
+            "@com_github_semi_technologies_weaviate//adapters/repos/db/vector/hnsw/distancer/asm:go_default_library",
+            "@org_golang_x_sys//cpu:go_default_library",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
+go_test(
+    name = "distancer_test",
+    srcs = [
+        "bench_amd64_test.go",
+        "cosine_dist_test.go",
+        "dot_product_amd64_test.go",
+        "dot_product_test.go",
+        "geo_spatial_test.go",
+        "hamming_test.go",
+        "l2_amd64_test.go",
+        "l2_test.go",
+        "manhattan_test.go",
+    ],
+    embed = [":distancer"],
+    deps = [
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+    ] + select({
+        "@io_bazel_rules_go//go/platform:amd64": [
+            "@com_github_semi_technologies_weaviate//adapters/repos/db/vector/hnsw/distancer/asm:go_default_library",
+        ],
+        "//conditions:default": [],
+    }),
+)

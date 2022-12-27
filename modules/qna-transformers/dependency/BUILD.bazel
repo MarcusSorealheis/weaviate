@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "dependency",
+    srcs = ["dependency.go"],
+    importpath = "github.com/marcussorealheis/weaviate/modules/qna-transformers/dependency",
+    visibility = ["//visibility:public"],
+    deps = ["@com_github_semi_technologies_weaviate//entities/modulecapabilities:go_default_library"],
+)

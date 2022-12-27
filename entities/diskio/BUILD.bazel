@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "diskio",
+    srcs = ["metered_reader.go"],
+    importpath = "github.com/marcussorealheis/weaviate/entities/diskio",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "diskio_test",
+    srcs = ["metered_reader_test.go"],
+    embed = [":diskio"],
+    deps = [
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+    ],
+)

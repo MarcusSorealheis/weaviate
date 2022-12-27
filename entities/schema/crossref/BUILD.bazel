@@ -1,0 +1,32 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "crossref",
+    srcs = [
+        "crossref.go",
+        "crossref_source.go",
+    ],
+    importpath = "github.com/marcussorealheis/weaviate/entities/schema/crossref",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema:go_default_library",
+    ],
+)
+
+go_test(
+    name = "crossref_test",
+    srcs = [
+        "crossref_source_test.go",
+        "crossref_test.go",
+    ],
+    embed = [":crossref"],
+    deps = [
+        "@com_github_go_openapi_strfmt//:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/models:go_default_library",
+        "@com_github_semi_technologies_weaviate//entities/schema:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+    ],
+)
